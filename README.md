@@ -45,7 +45,8 @@ git branch -d backup_branch
 
 - VSC-Code
 - Pythoon
-- C++
+- C
+- Java
 - ScioSpecEIT
 - JupyterLab
 - SublimeMerge
