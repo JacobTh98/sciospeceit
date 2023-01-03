@@ -57,6 +57,18 @@ git branch -d backup_branch
 
 Sciospec specializes in solutions for electrical impedance spectroscopy, impedance tomography and other electrochemical/-analytical techniques. Primary applications are bio-analytics, biosensors, material science and process control.
 
+### Start from PowerShell
+
+- Navigate to directory (`C:\Users\ScioSpecEIT\Desktop\Sciospec EIT`)
+- Right `shift`+ `right mouse click` and `Open in PowerSehell`
+- Insert: `.\jre\bin\java.exe -jar .\Sciospec_EIT_Software_v1.19.jar 3.1416` or `.\jre\bin\java.exe -jar .\Sciospec_EIT_Software_v1.19.jar`
+- Press `Enter` and the GUI opens
+- Select `Serial` and the right `COM<n>`-port and press `OK` and `CONNECT`
+- Inside the new window select `create setup` and insert your individual setup configuration e.g. Amplitude 1.0, Range[V] +/-5, Min f[Hz]=10k, Max f[Hz] = 10k,  Steps=1, Scale=LINEAR and press next.
+- Select number of electrodes and the pattern.
+- Continue with own measurement configuration
+- ...
+
 ### Measurement PC
 
 For starting, stopping, spectating, and evaluating the measurements.
