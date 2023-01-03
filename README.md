@@ -59,6 +59,7 @@ Sciospec specializes in solutions for electrical impedance spectroscopy, impedan
 
 ### Start from PowerShell
 
+- Plug in USB-Connection inside ScioSpec `USB-FS` and turn it on
 - Navigate to directory (`C:\Users\ScioSpecEIT\Desktop\Sciospec EIT`)
 - Right `shift`+ `right mouse click` and `Open in PowerSehell`
 - Insert: `.\jre\bin\java.exe -jar .\Sciospec_EIT_Software_v1.19.jar 3.1416` or `.\jre\bin\java.exe -jar .\Sciospec_EIT_Software_v1.19.jar`
