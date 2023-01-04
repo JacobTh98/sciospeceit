@@ -70,6 +70,21 @@ Sciospec specializes in solutions for electrical impedance spectroscopy, impedan
 - Continue with own measurement configuration
 - ...
 
+### ScioSpec Communication Interface
+
+The Sciospec Communication Interface (COMinterface) enables the user to access all functions of the device by 
+using any of the available master interfaces. The actual command structure is identical in all connection types.
+
+#### Syntax
+The general structure of each communication with a Sciospec device:
+The communication is done by frames
+Each communication frame is constructed as follows
+- 1 byte command-Tag (Frame-Start)
+- 1 byte number of data-bytes (0...255) 0...255 data-bytes
+- 1 byte Command-Tag (Frame-End)
+- The command-tag identifies the command (see Command list)
+- Frame-Start and –End must be identical
+
 ### Measurement PC
 
 For starting, stopping, spectating, and evaluating the measurements.
