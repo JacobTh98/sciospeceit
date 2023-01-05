@@ -16,7 +16,12 @@ from .communication_info import (
     print_command_list,
 )
 
-from .connect import available_serial_ports, connect_COM_port
+from .connect import (
+    available_serial_ports,
+    connect_COM_port,
+    serial_write,
+    disconnect_COM_port,
+)
 
 __all__ = [
     # communication_info
@@ -27,4 +32,6 @@ __all__ = [
     # connect
     "available_serial_ports",
     "connect_COM_port",
+    "serial_write",
+    "disconnect_COM_port",
 ]

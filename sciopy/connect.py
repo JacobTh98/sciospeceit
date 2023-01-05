@@ -3,7 +3,8 @@ try:
 except ImportError:
     print("Could not import module: serial")
 
-import serial
+import sys
+import glob
 
 
 def available_serial_ports():
@@ -51,3 +52,12 @@ def connect_COM_port(port: str = "COM3", baudrate: int = 9600, timeout: int = 1)
 
     print("Connection to", ser.name, "is established.")
     return ser
+
+
+def serial_write(ser, cmd):
+    ser.write(cmd)
+
+
+def disconnect_COM_port(ser):
+    ser.close()
+    print("Disconnected from {port}.".format(port=ser.name))
