@@ -23,6 +23,15 @@ from .connect import (
     disconnect_COM_port,
 )
 
+from .doteit import (
+    list_eit_files,
+    list_all_files,
+    single_eit_in_pickle,
+    load_pickle_to_dict,
+    convert_fulldir_doteit_to_pickle,
+    convert_fulldir_doteit_to_npz,
+)
+
 __all__ = [
     # communication_info
     "print_syntax",
@@ -34,4 +43,11 @@ __all__ = [
     "connect_COM_port",
     "serial_write",
     "disconnect_COM_port",
+    # doteit
+    "list_eit_files",
+    "list_all_files",
+    "single_eit_in_pickle",
+    "load_pickle_to_dict",
+    "convert_fulldir_doteit_to_pickle",
+    "convert_fulldir_doteit_to_npz",
 ]
