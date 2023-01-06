@@ -7,8 +7,9 @@
 - [x] Set up measurement environment
 - [x] Print out the ScioSpec user manual
 - [x] First test measurement
-- [ ] Review data
-- [ ] Proceed and describe further steps
+- [x] Review data
+- [x] Proceed and describe further steps
+- [ ] Record first experimental data
 
 ## Repository
 
@@ -41,7 +42,7 @@ git branch -d backup_branch
 
 ```
 
-### Recommended software
+## Recommended software
 
 - VSC-Code
 - Pythoon
@@ -51,13 +52,11 @@ git branch -d backup_branch
 - JupyterLab
 - SublimeMerge
 
-## Components
-
-### ScioSpec
+# ScioSpec EIT Device
 
 Sciospec specializes in solutions for electrical impedance spectroscopy, impedance tomography and other electrochemical/-analytical techniques. Primary applications are bio-analytics, biosensors, material science and process control.
 
-### Start from PowerShell
+## Start ScioSpec Software from PowerShell
 
 - Plug in USB-Connection inside ScioSpec `USB-FS` and turn it on
 - Navigate to directory (`C:\Users\ScioSpecEIT\Desktop\Sciospec EIT`)
@@ -70,12 +69,12 @@ Sciospec specializes in solutions for electrical impedance spectroscopy, impedan
 - Continue with own measurement configuration
 - ...
 
-### ScioSpec Communication Interface
+## ScioSpec Communication Interface
 
 The Sciospec Communication Interface (COMinterface) enables the user to access all functions of the device by 
 using any of the available master interfaces. The actual command structure is identical in all connection types.
 
-#### Syntax
+### Syntax
 The general structure of each communication with a Sciospec device:
 The communication is done by frames
 Each communication frame is constructed as follows
@@ -85,7 +84,58 @@ Each communication frame is constructed as follows
 - The command-tag identifies the command (see Command list)
 - Frame-Start and –End must be identical
 
-### Measurement PC
+# Setup ScioSpec Measurement 
+
+## Connection opportunities
+
+**USB**
+- Named "USB-HS" (USB Full Speed) on the backplate of the ScioSpecEIT device
+- Not galvanically isolated
+
+**Ethernet**
+- Not galvanically isolated
+- Use for long distances
+- High communication data rate, use local network (switch)
+
+**Serial**
+- Named "USB-FS" (USB Full Speed) on the backplate of the ScioSpecEIT device
+- Data rates up to 1MB/s
+- Galvanically isolated
+
+## Framerate
+It can be set near zero up to 100.
+
+## Burst Count
+Set the number of measurements that has to be done. If `0` the system measures until you press the measurement button again.
+
+## Frequency
+The defineable variables are `f_min`, `f_max`, `count` and `scale`.
+- `f_min` is the start frequency
+- `f_max` is the stop frequency 
+- If `f_min` < `f_max` the `count` defines the equdistant steps between the min and max values
+- `scale` can be selected as LINEAR or LOGARITHMIC. It has a direct impact to the `count` values 
+
+## Switch
+
+**ReedRelay**
+
+**Semiconductor**
+
+## Measurement Mode
+
+## Termination
+
+**Intern**
+
+**Extern**
+
+## Compute Voltage from Complex Potentials
+Pay attention. The following order must be observed:
+- Subtract the real and imaginary parts of the corresponding electrodes
+- Compute the absolute value 
+
+
+# Measurement PC
 
 For starting, stopping, spectating, and evaluating the measurements.
 
@@ -98,27 +148,26 @@ Installed software:
 - [x] Python3
 - [ ] ...
 
-### Measurement Components
+## Measurement Components
 
 - Saline
 - ...
 
-## Contributors
+# Contributors
 
 - jt292
 - lk443
 - ss1272
 
 
-## Acknowledgment
+# Acknowledgment
 
 SFB: Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Founda-
 tion) – SFB 1270/2 - 299150580.
 
-## License
+# License
 
- 
+ *TBD*
 
-## Project status
-
+# Project status
 In Progress
