@@ -1,4 +1,4 @@
-def print_syntax():
+def print_syntax() -> None:
     """List sciospec communication interface syntax."""
     print("The general structure of each communication with a Sciospec device:")
     print("- The communication is done by frames")
@@ -11,7 +11,7 @@ def print_syntax():
     print("- Frame-Start and –End must be identical")
 
 
-def print_acknowledge_messages():
+def print_acknowledge_messages() -> None:
     """List acknowledge messages."""
     print(
         "- Communication-frames with incorrect syntax will cause a “Frame-Not-Acknowledge” message"
@@ -32,7 +32,7 @@ def print_acknowledge_messages():
     )
 
 
-def print_general_system_messages():
+def print_general_system_messages() -> None:
     """Print general system messages."""
     print("0x01    Frame-Not-Acknowledge: Incorrect syntax")
     print("0x02    Timeout: Communication-timeout (less data than expected)")
@@ -49,7 +49,7 @@ def print_general_system_messages():
     )
 
 
-def print_command_list():
+def print_command_list() -> None:
     """Print out command list."""
     print(
         "The leading hex code of each command heading represents the [command code] of the respective function."
@@ -74,9 +74,9 @@ def print_command_list():
     print("0xD2 - Get firmware IDs             GS=D2 00 D2")
 
 
-def save_settings():
+def save_settings() -> None:
     print("Saved Settings: 0x90")
 
 
-def software_reset():
+def software_reset() -> None:
     print("Software reset: 0xA1")

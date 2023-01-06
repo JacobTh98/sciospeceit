@@ -7,7 +7,7 @@ import sys
 import glob
 
 
-def available_serial_ports():
+def available_serial_ports() -> list:
     """Lists serial port names
 
     :raises EnvironmentError:
@@ -54,10 +54,10 @@ def connect_COM_port(port: str = "COM3", baudrate: int = 9600, timeout: int = 1)
     return ser
 
 
-def serial_write(ser, cmd):
+def serial_write(ser, cmd: str):
     ser.write(cmd)
 
 
-def disconnect_COM_port(ser):
+def disconnect_COM_port(ser) -> None:
     ser.close()
     print("Disconnected from {port}.".format(port=ser.name))
