@@ -9,6 +9,7 @@
 - [x] First test measurement
 - [x] Review data
 - [x] Proceed and describe further steps
+- [ ] Write a `sciopy` module to convert .eit data and record data using a serial connection
 - [ ] Record first experimental data
 
 ## Repository
@@ -119,15 +120,20 @@ The defineable variables are `f_min`, `f_max`, `count` and `scale`.
 
 **ReedRelay**
 
+Are much slower in switching ~600µs, but the parasitic capacitance and parasitic resistance are very low.
+
 **Semiconductor**
+
+The switch is used in fast measurements, because of its switching time of less than some ns. The disadvantage is high parasitic capacitance and parasitic resistance. 
 
 ## Measurement Mode
 
+In any mode except "SingleEnded" the complex potentials are measured and saved to the .eit frame.
+For E.g. the opposite drive pattern the mode has to be implemented on our own. For computing, the voltage data from complex potentials see the next chapter.
+
 ## Termination
 
-**Intern**
-
-**Extern**
+The operator **Intern**  includes only measurement data of the defined electrode range. **Extern** records the external potential data too.
 
 ## Compute Voltage from Complex Potentials
 Pay attention. The following order must be observed:
@@ -144,14 +150,14 @@ Installed software:
 - [x] Visual-Studio-Code
 - [x] ScioSpecEIT
 - [x] Sublime Merge
-- [x] JupyterLab
-- [x] Python3
-- [ ] ...
+- [ ] JupyterLab
+- [x] Python3.11
 
 ## Measurement Components
 
-- Saline
-- ...
+- [x] Saline
+- [ ] Different object geometries
+- [ ] ...
 
 # Contributors
 
@@ -159,10 +165,9 @@ Installed software:
 - lk443
 - ss1272
 
-
 # Acknowledgment
 
-SFB: Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Founda-
+Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Founda-
 tion) – SFB 1270/2 - 299150580.
 
 # License
