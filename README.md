@@ -90,7 +90,7 @@ Each communication frame is constructed as follows
 ## Connection opportunities
 
 **USB**
-- Named "USB-HS" (USB Full Speed) on the backplate of the ScioSpecEIT device
+- Named "USB-HS" (USB High Speed) on the backplate of the ScioSpecEIT device
 - Not galvanically isolated
 
 **Ethernet**
