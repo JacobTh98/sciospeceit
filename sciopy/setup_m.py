@@ -6,7 +6,18 @@ from time import sleep
 
 
 def GeneralSystemMessages(serial):
-    msg = [serial.read() for i in range(4)]
+    """Reads the message buffer of a serial connection. Also prints out the general system message."""
+    msg_dict = {
+        "0x02": "Timeout: Communication-timeout (less data than expected)",
+        "0x04": "Wake-Up Message: System boot ready",
+        "0x11": "TCP-Socket: Valid TCP client-socket connection",
+        "0x81": "Not-Acknowledge: Command has not been executed",
+        "0x82": "Not-Acknowledge: Command could not be recognized",
+        "0x83": "Command-Acknowledge: Command has been executed successfully",
+        "0x84": "System-Ready Message: System is operational and ready to receive data",
+        "0x91": "Data holdup: Measurement data could not be sent via the master interface",
+    }
+    msg = [serial.read() + "," for i in range(4)]  # optimize to lenth
     print(msg)
 
 
@@ -22,8 +33,75 @@ def SoftwareReset(serial) -> None:
     print(callback)
 
 
-def SetMeasurementSetup():
-    pass
+def ResetMeasurementSetup(serial):
+    serial.write(bytearray([0xB0, 0x01, 0x01, 0xB0]))
+    callback = GeneralSystemMessages(serial)
+    print(callback)
+
+
+def SetMeasurementSetup(
+    serial,
+    burst_count: int,
+    frame_rate: int = 1,
+    exc_freq: list = [100, 100, 1, 0],
+    exc_amp: float = 0.01,
+) -> None:
+    """
+    serial      ... Serial connection to the ScioSpecEIT device.
+    burst_count ... Number of frames generated before measurement stops automatically.
+    frame_rate  ... Number of EIT-frames per second.
+    exc_freq    ... Add excitation frequency block in Hz: [fmin, fmax, fcount, ftype]
+    exc_amp     ... Set excitation amplitude in ampere.
+
+    Further information:
+
+    [fmin]
+        • minimum frequency fmin
+        • 4 Byte floating point single precision value
+        • range = 100 Hz - 10 MHz
+        • Default: fmin = 100 kHz
+    [fmax]
+        • maximum frequency fmax
+        • 4 Byte floating point single precision value
+        • range = 100 Hz - 10 MHz
+        • Default: fmax = 100 kHz
+    [fcount]
+        • frequency count fcount
+        • 2 Byte unsigned integer value
+        • range = 1 - 128
+        • Default: fcount = 1
+    [ftype]
+        • frequency type ftype
+        • 1 Byte unsigned interger value
+        • ftype = 0: linear frequency distribution | 1: logarithmic frequency distribution
+        • Default: ftype = 0
+    [excitation amplitude]
+        • 8 Byte Floating Point double precision value.
+        • Amin = 100 nA
+        • Amax = 10 mA
+        • Step size see Chapter “Technical Specification”
+        • Default: A = 0.01 A
+    """
+
+    def write_part(serial, msg):
+        serial.write(msg)
+        print(GeneralSystemMessages(serial))
+
+    burst_count = bytearray([0xB0, 0x03, 0x02, burst_count, 0xB0])
+    write_part(serial, burst_count)
+
+    frame_rate = bytearray([0xB0, 0x05, 0x03, frame_rate, 0xB0])
+    write_part(serial, frame_rate)
+
+    exc_freq = bytearray(
+        [0xB0, 0x0C, 0x04, exc_freq[0], exc_freq[1], exc_freq[2], exc_freq[3], 0xB0]
+    )
+    write_part(serial, exc_freq)
+
+    # exc_amp = bytearray([0xB0, 0x05, 0x05, exc_amp, 0xB0])
+    # write_part(serial, exc_amp)
+
+    print("Setup done")
 
 
 def GetMeasurementSetup():
