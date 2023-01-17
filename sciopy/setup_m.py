@@ -8,17 +8,24 @@ from time import sleep
 def GeneralSystemMessages(serial) -> str:
     """Reads the message buffer of a serial connection. Also prints out the general system message."""
     msg_dict = {
-        "0x02": "Timeout: Communication-timeout (less data than expected)",
-        "0x04": "Wake-Up Message: System boot ready",
-        "0x11": "TCP-Socket: Valid TCP client-socket connection",
-        "0x81": "Not-Acknowledge: Command has not been executed",
-        "0x82": "Not-Acknowledge: Command could not be recognized",
-        "0x83": "Command-Acknowledge: Command has been executed successfully",
-        "0x84": "System-Ready Message: System is operational and ready to receive data",
-        "0x91": "Data holdup: Measurement data could not be sent via the master interface",
+        b"\x02": "Timeout: Communication-timeout (less data than expected)",
+        b"\x04": "Wake-Up Message: System boot ready",
+        b"\x11": "TCP-Socket: Valid TCP client-socket connection",
+        b"\x81": "Not-Acknowledge: Command has not been executed",
+        b"\x82": "Not-Acknowledge: Command could not be recognized",
+        b"\x83": "Command-Acknowledge: Command has been executed successfully",
+        b"\x84": "System-Ready Message: System is operational and ready to receive data",
+        b"\x91": "Data holdup: Measurement data could not be sent via the master interface",
     }
-    msg = [serial.read() + "," for i in range(4)]  # optimize to lenth
-    return msg
+    start_cmd_tag = serial.read()
+    cmd_msg_len = serial.read()
+    if int.from_bytes(cmd_msg_len, "big") == 1:
+        msg = msg_dict[serial.read()]
+    else:
+        msg = [serial.read() for i in range(int.from_bytes(cmd_msg_len, "big"))]
+        msg = [int.from_bytes(m, "big") for m in msg]
+    if start_cmd_tag == serial.read():
+        return msg
 
 
 def SaveSettings(serial) -> None:
@@ -88,8 +95,9 @@ def SetMeasurementSetup(
         callback = GeneralSystemMessages(serial)
         print(callback)
 
-    burst_count = bytearray([0xB0, 0x03, 0x02, burst_count, 0xB0])
-    write_part(serial, burst_count)
+    if burst_count <= 255:
+        burst_count = bytearray([0xB0, 0x03, 0x02, 0x00, burst_count, 0xB0])
+        write_part(serial, burst_count)
 
     frame_rate = bytearray([0xB0, 0x05, 0x03, frame_rate, 0xB0])
     write_part(serial, frame_rate)
@@ -358,6 +366,83 @@ def TCP_ConnectionWatchdog():
     pass
 
 
-def GetFirmwareIDs():
-    """TBD"""
-    pass
+def GetFirmwareIDs(serial) -> None:
+    """Get firmware IDs"""
+    serial.write(bytearray([0xD2, 0x00, 0xD2]))
+    callback = GeneralSystemMessages(serial)
+    print(callback)
+
+
+def Config_01(serial) -> None:
+    serial.write(bytearray([0xB0, 0x01, 0x01, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x02, 0x00, 0x09, 0xB0]))
+    serial.write(
+        bytearray(
+            [0xB0, 0x09, 0x05, 0x3F, 0x50, 0x62, 0x4D, 0xD2, 0xF1, 0xA9, 0xFC, 0xB0]
+        )
+    )
+    serial.write(bytearray([0xB0, 0x02, 0x0D, 0x01, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x09, 0x01, 0x00, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x08, 0x01, 0x01, 0xB0]))
+    serial.write(bytearray([0xB0, 0x02, 0x0C, 0x01, 0xB0]))
+    serial.write(bytearray([0xB0, 0x05, 0x03, 0x40, 0x00, 0x00, 0x00, 0xB0]))
+    serial.write(
+        bytearray(
+            [
+                0xB0,
+                0x0C,
+                0x04,
+                0x44,
+                0x7A,
+                0x00,
+                0x00,
+                0x44,
+                0x7A,
+                0x00,
+                0x00,
+                0x00,
+                0x01,
+                0x00,
+                0xB0,
+            ]
+        )
+    )
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x01, 0x02, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x02, 0x03, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x03, 0x04, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x04, 0x05, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x05, 0x06, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x06, 0x07, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x07, 0x08, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x08, 0x09, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x09, 0x0A, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x0A, 0x0B, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x0B, 0x0C, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x0C, 0x0D, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x0D, 0x0E, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x0E, 0x0F, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x0F, 0x10, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x10, 0x11, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x11, 0x12, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x12, 0x13, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x13, 0x14, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x14, 0x15, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x15, 0x16, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x16, 0x17, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x17, 0x18, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x18, 0x19, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x19, 0x1A, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x1A, 0x1B, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x1B, 0x1C, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x1C, 0x1D, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x1D, 0x1E, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x1E, 0x1F, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x1F, 0x20, 0xB0]))
+    serial.write(bytearray([0xB0, 0x03, 0x06, 0x20, 0x01, 0xB0]))
+    serial.write(bytearray([0xB1, 0x01, 0x03, 0xB1]))
+    serial.write(bytearray([0xB2, 0x02, 0x01, 0x01, 0xB2]))
+    serial.write(bytearray([0xB2, 0x02, 0x03, 0x01, 0xB2]))
+    serial.write(bytearray([0xB2, 0x02, 0x02, 0x01, 0xB2]))
+    serial.write(bytearray([0xB4, 0x01, 0x01, 0xB4]))
+    sleep(10)
+    serial.write(bytearray([0xB4, 0x01, 0x00, 0xB4]))
