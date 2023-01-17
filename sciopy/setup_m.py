@@ -5,7 +5,7 @@
 from time import sleep
 
 
-def GeneralSystemMessages(serial):
+def GeneralSystemMessages(serial) -> str:
     """Reads the message buffer of a serial connection. Also prints out the general system message."""
     msg_dict = {
         "0x02": "Timeout: Communication-timeout (less data than expected)",
@@ -18,7 +18,7 @@ def GeneralSystemMessages(serial):
         "0x91": "Data holdup: Measurement data could not be sent via the master interface",
     }
     msg = [serial.read() + "," for i in range(4)]  # optimize to lenth
-    print(msg)
+    return msg
 
 
 def SaveSettings(serial) -> None:
@@ -83,9 +83,10 @@ def SetMeasurementSetup(
         • Default: A = 0.01 A
     """
 
-    def write_part(serial, msg):
+    def write_part(serial, msg) -> None:
         serial.write(msg)
-        print(GeneralSystemMessages(serial))
+        callback = GeneralSystemMessages(serial)
+        print(callback)
 
     burst_count = bytearray([0xB0, 0x03, 0x02, burst_count, 0xB0])
     write_part(serial, burst_count)
@@ -104,20 +105,130 @@ def SetMeasurementSetup(
     print("Setup done")
 
 
-def GetMeasurementSetup():
+def GetMeasurementSetup(serial) -> None:
+    """Get information about:
+    - Burst Count
+    - Frame Rate
+    - Excitation Frequencies
+    - Excitation Amplitude
+    - Excitation Sequence
+    - Single-Ended or Differential Measure Mode
+    - Gain Settings
+    - Excitation Switch Type
+    """
+    burst_count = bytearray([0xB1, 0x01, 0x02, 0xB1])
+    serial.write(burst_count)
+    print("Burst Count:")
+    callback = GeneralSystemMessages(serial)  # [CT] 03 02 [burst count] [CT]
+    print(callback)
+
+    frame_rate = bytearray([0xB1, 0x01, 0x03, 0xB1])
+    serial.write(frame_rate)
+    print("Frame Rate:")
+    callback = GeneralSystemMessages(serial)  # [CT] 05 03 [frame rate] [CT]
+    print(callback)
+
+    exc_freq = bytearray([0xB1, 0x01, 0x04, 0xB1])
+    serial.write(exc_freq)
+    print("Excitation Frequencies:")
+    callback = GeneralSystemMessages(
+        serial
+    )  # [CT] [LE] 04 [fmin 1st block] [fmax 1st block] [fcount 1st block] [ftype 1st block] [fmin 2nd block] [fmax 2nd block] [fcount 2nd block] [ftype 2nd block] ... [CT]
+    print(callback)
+
+    exc_amp = bytearray(
+        [0xB1, 0x01, 0x05, 0xB1]
+    )  # [CT] 05 05 [excitation amplitude] [CT]
+    serial.write(exc_amp)
+    print("Excitation Amplitude:")
+    callback = GeneralSystemMessages(serial)
+    print(callback)
+
+    exc_seq = bytearray([0xB1, 0x01, 0x06, 0xB1])
+    serial.write(exc_seq)
+    print("Excitation Sequence:")
+    callback = GeneralSystemMessages(serial)  # [CT] [LE] 06 [excitation sequence] [CT]
+    print(callback)
+
+    meas_mode = bytearray([0xB1, 0x01, 0x08, 0xB1])
+    serial.write(meas_mode)
+    print("Measure Mode:")
+    callback = GeneralSystemMessages(serial)  # [CT] 03 08 [Mode] [Boundary] [CT]
+    print(callback)
+
+    gain = bytearray([0xB1, 0x01, 0x09, 0xB1])
+    serial.write(gain)
+    print("Gain Settings:")
+    callback = GeneralSystemMessages(serial)  # [CT] [LE] 09 [Mode] [Data] [CT]
+    print(callback)
+
+    exc_switch = bytearray([0xB1, 0x01, 0x0C, 0xB1])
+    serial.write(exc_switch)
+    print("Excitation switch type:")
+    callback = GeneralSystemMessages(serial)  # [CT] 02 0C [Type] [CT]
+    print(callback)
+
+
+def SetOutputConfiguration(
+    serial, exc_settings: int, curr_row_freq_stack: int, timestamp: int
+) -> None:
+    """
+    This command is used to enable or disable additional information in output data stream of measured data (see
+    section "Measured Data"). This command is only valid while no measurement is ongoing. In this case a not
+    acknowledge (NACK) is returned.
+
+    Excitation setting
+        Enable or disable Excitation setting (additional 2 Byte in output stream).
+
+        Syntax
+        • Syntax set: [CT] 02 01 [enable/disable] [CT] [enable/disable]
+        • 1 Byte unsigned integer value
+        • 0 - disable, 1 - enable
+    Current row in the frequency stack
+        Enable or disable current row in the frequency stack (additional 2 Byte in output stream)
+
+        Syntax
+        • Syntax set: [CT] 02 02 [enable/disable] [CT] [enable/disable]
+        • 1 Byte unsigned integer value
+        • 0 - disable, 1 - enable
+    Timestamp
+        Enable or disable timestamp (additional 4 Byte in output stream).
+
+        Syntax
+        • Syntax set: [CT] 02 03 [enable/disable] [CT]
+    """
+    # write excitation setting
+    serial.write(bytearray([0xB2, 0x02, 0x01, exc_settings, 0xB2]))
+    callback = GeneralSystemMessages(serial)
+    print(callback)
+    # write current row in the frequency stack
+    serial.write(bytearray([0xB2, 0x02, 0x02, curr_row_freq_stack, 0xB2]))
+    callback = GeneralSystemMessages(serial)
+    print(callback)
+    # write timestamp
+    serial.write(bytearray([0xB2, 0x02, 0x03, timestamp, 0xB2]))
+    callback = GeneralSystemMessages(serial)
+    print(callback)
+
+
+def GetOutputConfiguration(serial) -> None:
+    """Returns the display option in the data stream of measured date."""
     pass
 
 
-def SetOutputConfiguration():
-    pass
-
-
-def GetOutputConfiguration():
-    pass
-
-
-def Start_StopMeasurement():
-    pass
+def Start_StopMeasurement(serial, command: int) -> None:
+    """
+    A new measurement can only be started when no other measurement is ongoing. A description is can be found in
+    section "Measured Data".
+        command = 1 for start
+        command = 0 for stop
+    """
+    if command == 1:
+        serial.write(bytearray([0xB4, 0x01, 0x01, 0xB4]))
+    else:
+        serial.write(bytearray([0xB4, 0x01, 0x00, 0xB4]))
+    callback = GeneralSystemMessages(serial)
+    print(callback)
 
 
 def GetTemperature() -> None:
@@ -125,23 +236,23 @@ def GetTemperature() -> None:
 
 
 def SetBatteryControll():
-    pass
+    """TBD"""
 
 
 def GetBatteryControll():
-    pass
+    """TBD"""
 
 
-def SetLEDControl(led: int, mode: str, serial) -> None:
+def SetLEDControl(serial, led: int, mode: str) -> None:
     """
     Disable or enable auto mode.
+    serial: serial connection
     led: number of led 1,2,3 or 4
         #1 ... Ready
         #2 ... Measure
         #3 ... ---
         #4 ... Status
     mode: "enable" or "disable"
-    serial: serial connection
     """
     if mode == "disable":
         MODE = 0x00
@@ -150,24 +261,20 @@ def SetLEDControl(led: int, mode: str, serial) -> None:
 
     byte_arr = bytearray([0xC8, 0x03, 0x01, led, MODE, 0xC8])
     serial.write(byte_arr)
-    # Enable Auto mode
-    # ser.write(bytearray([0xC8, 0x03, 0x01, 0x04,0x01, 0xC8]))
-    # Disable Auto mode
-    # ser.write(bytearray([0xC8, 0x03, 0x01, 0x04, 0x00, 0xC8]))
     callback = GeneralSystemMessages(serial)
     print(callback)
 
 
-def GetLEDControl(led: int, mode: str, serial) -> None:
+def GetLEDControl(serial, led: int, mode: str) -> None:
     """
     Set a defined led to mode off, on or blink.
+    serial: serial connection
     led: number of led 1,2,3 or 4
         #1 ... Ready
         #2 ... Measure
         #3 ... ---
         #4 ... Status
     mode: "enable", "disable" or "blink"
-    serial: serial connection
     """
     if mode == "disable":
         MODE = 0x00
@@ -183,18 +290,19 @@ def GetLEDControl(led: int, mode: str, serial) -> None:
     print(callback)
 
 
-def SetLED_Mode(led: int, mode: str, serial) -> None:
+def SetLED_Mode(serial, led: int, mode: str) -> None:
     """
+    serial: serial connection
     led: number of led 1,2,3 or 4
         #1 ... Ready
         #2 ... Measure
         #3 ... ---
         #4 ... Status
     mode: "enable", "disable" or "blink"
-    serial: serial connection
     """
     # Disable automode
     serial.write(bytearray([0xC8, 0x03, 0x01, led, 0x00, 0xC8]))
+    GeneralSystemMessages(serial)
     if mode == "disable":
         MODE = 0x00
     elif mode == "enable":
@@ -209,34 +317,47 @@ def SetLED_Mode(led: int, mode: str, serial) -> None:
 def DisableLED_AutoMode(serial) -> None:
     """Disable automode of all LEDs."""
     serial.write(bytearray([0xC8, 0x03, 0x01, 0x01, 0x00, 0xC8]))
+    GeneralSystemMessages(serial)
     serial.write(bytearray([0xC8, 0x03, 0x01, 0x02, 0x00, 0xC8]))
+    GeneralSystemMessages(serial)
     serial.write(bytearray([0xC8, 0x03, 0x01, 0x03, 0x00, 0xC8]))
+    GeneralSystemMessages(serial)
     serial.write(bytearray([0xC8, 0x03, 0x01, 0x04, 0x00, 0xC8]))
+    GeneralSystemMessages(serial)
 
 
 def EnableLED_AutoMode(serial) -> None:
     """Enable automode of all LEDs."""
     serial.write(bytearray([0xC8, 0x03, 0x01, 0x01, 0x01, 0xC8]))
+    GeneralSystemMessages(serial)
     serial.write(bytearray([0xC8, 0x03, 0x01, 0x02, 0x01, 0xC8]))
+    GeneralSystemMessages(serial)
     serial.write(bytearray([0xC8, 0x03, 0x01, 0x03, 0x01, 0xC8]))
+    GeneralSystemMessages(serial)
     serial.write(bytearray([0xC8, 0x03, 0x01, 0x04, 0x01, 0xC8]))
+    GeneralSystemMessages(serial)
 
 
 def FrontIOs():
+    """TBD"""
     pass
 
 
 def PowerPlugDetect():
+    """TBD"""
     pass
 
 
 def GetDevideInfo():
+    """TBD"""
     pass
 
 
 def TCP_ConnectionWatchdog():
+    """TBD"""
     pass
 
 
 def GetFirmwareIDs():
+    """TBD"""
     pass
