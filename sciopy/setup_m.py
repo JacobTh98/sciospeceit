@@ -351,14 +351,20 @@ def FrontIOs():
     pass
 
 
-def PowerPlugDetect():
-    """TBD"""
-    pass
+def PowerPlugDetect(serial) -> None:
+    serial.write(bytearray([0xCC, 0x01, 0x81, 0xCC]))
+    callback = GeneralSystemMessages(serial)
+    if callback[1] == 1:
+        print("power plug is inserted")
+    else:
+        print(("power plug is not inserted"))
 
 
-def GetDevideInfo():
-    """TBD"""
-    pass
+def GetDevideInfo(serial) -> None:
+    """Get device info"""
+    serial.write(bytearray([0xD1, 0x00, 0xD1]))
+    callback = GeneralSystemMessages(serial)
+    print(callback)
 
 
 def TCP_ConnectionWatchdog():
