@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from typing import Union, List
 import sys
 from matplotlib.figure import Figure
+from matplotlib.patches import Rectangle
+from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
@@ -310,31 +312,145 @@ class MovementXYZ:
         print("Set motion speed to", self.motion_speed.get(), "[mm/min]")
 
 
-def plot():
+class CreateCircularTrajectory:
+    def __init__(self, app) -> None:
+        self.traj_label = Label(
+            app, text="Create a circular trajectory around the center point"
+        )
+        self.traj_label.place(
+            x=spacer,
+            y=y_0ff + 4 * btn_height + 1 * spacer,
+            width=x_0ff + 4 * btn_width,
+            height=btn_height,
+        )
+        self.traj_info_dialog = Button(
+            app, text="Info", command=action_get_info_dialog_traj
+        )
+        self.traj_info_dialog.place(
+            x=x_0ff + 4 * btn_width + spacer,
+            y=y_0ff + 4 * btn_height + 1 * spacer,
+            width=btn_width,
+            height=btn_height,
+        )
 
-    fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(4, 2))
+        self.radius_input_btn = Button(app, text="r=", command=self.set_r_values)
+        self.radius_input_btn.place(
+            x=spacer,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width,
+            height=btn_height,
+        )
 
-    t = np.arange(0, 3, 0.01)
-    ax1.plot(t, 2 * np.sin(2 * np.pi * t))
-    ax1.set_title("x-y Plane")
-    ax2.plot(t, 2 * np.cos(2 * np.pi * t))
+        self.radius_entry = Entry(app)
+        self.radius_entry.place(
+            x=2 * spacer + btn_width,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width,
+            height=btn_height,
+        )
+        self.radius_unit = Label(app, text="mm").place(
+            x=2 * spacer + 2 * btn_width,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width // 2,
+            height=btn_height,
+        )
+
+        self.phi_input_btn = Button(app, text="phi=", command=self.set_phi_values)
+        self.phi_input_btn.place(
+            x=3 * spacer + 2 * btn_width + btn_width // 2,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width,
+            height=btn_height,
+        )
+        self.phi_entry = Entry(app)
+        self.phi_entry.place(
+            x=5 * spacer + 2 * btn_width + btn_width,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width,
+            height=btn_height,
+        )
+        self.phi_unit = Label(app, text="step/360°").place(
+            x=5 * spacer + 3 * btn_width + btn_width,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width + btn_width // 2,
+            height=btn_height,
+        )
+
+        self.compute_trajectory = Button(app, text="Info", command=compute_trajectory)
+        self.compute_trajectory.place(
+            x=x_0ff + 4 * btn_width + spacer,
+            y=y_0ff + 4 * btn_height + 1 * spacer,
+            width=btn_width,
+            height=btn_height,
+        )
+
+    def set_r_values(self):
+        print("r=", self.radius_entry.get())
+
+    def set_phi_values(self):
+        print("r=", self.phi_entry.get())
+
+
+def compute_trajectory():
+    # Already implemented.
+    """Connection between dataclasses and the object oriented classes in tkkinter has to be done."""
+    print("computation has to be substituted... (TBD)")
+
+
+"""
+def plot_x_y_circle(x,y):
+
+    plt.scatter(x,y, label="Measurement points", marker='*')
+    plt.legend()
+    plt.show()
+"""
+
+
+def plot(x=180, y=180, z=100) -> None:
+    plt.rcParams["font.size"] = 5
+    plt.rcParams["figure.autolayout"] = True
+    fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(8, 5))
+
+    ax1.set_title("Top view")
+    ax1.scatter(x, y, marker=".", label="Currently")
+    ax1.scatter(x + 10, y + 10, marker="*", label="Target")
+    ax1.set_ylabel("absolute y[mm]")
+    ax1.set_xlabel("absolute x[mm]")
+    ax1.set_xlim((0, 350))
+    ax1.set_ylim((0, 350))
+    ax1.grid()
+    ax1.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.6, 1.00),
+        fancybox=True,
+        ncol=5,
+    )
+    if x == 180 and y == 180:
+        ax1.vlines(180, 0, 500, linestyles="dotted", color="black")
+        ax1.hlines(180, 0, 500, linestyles="dotted", color="black")
+
+    ax2.set_title("Front view")
+    errorboxes = [Rectangle((100, z), width=150, height=100)]
+    pc = PatchCollection(
+        errorboxes, facecolor="lightsteelblue", alpha=0.8, edgecolor="black"
+    )
+    ax2.add_collection(pc)
+    ax2.hlines(z, 50, 300, linestyles="solid", color="black", label="z-table")
+    ax2.scatter(x, z + 10, marker=".")
+    ax2.scatter(x + 10, z + 10, marker="*")
+    ax2.set_ylabel("absolute z[mm]")
+    ax2.set_xlabel("absolute x[mm]")
+    ax2.set_xlim((0, 350))
+    ax2.set_ylim((0, 350))
+    ax2.grid()
+    ax2.legend()
+    # ax2.hlines(180, 0, 200, linestyles="dotted", color="black")
 
     canvas = FigureCanvasTkAgg(fig, master=app)
     canvas.draw()
-    # placing the canvas on the Tkinter window
-    canvas.get_tk_widget().place(x=700, y=spacer, width=350, height=700)
-
-    # creating the Matplotlib toolbar
+    canvas.get_tk_widget().place(x=750, y=spacer, width=400, height=800)
     toolbar = NavigationToolbar2Tk(canvas, app)
     toolbar.update()
-
-    # placing the toolbar on the Tkinter window
-    # canvas.get_tk_widget().pack()
-
-
-class VisualiseXYPlane:
-    def __init__(self, app) -> None:
-        self.x_y_plane_canvas = FigureCanvasTkAgg(app, figure=fig)
 
 
 def action_get_info_dialog():
@@ -348,6 +464,14 @@ Contct: jacob.thoenes@uni-rostock.de \n\
     messagebox.showinfo(message=m_text, title="Info")
 
 
+def action_get_info_dialog_traj():
+    m_text = "\
+************************\n\
+Add infos regarding the trajectory definition here...\n\
+************************"
+    messagebox.showinfo(message=m_text, title="Info")
+
+
 grid_dict = {"sticky": "we", "ipadx": "10"}
 
 """Main Init"""
@@ -356,9 +480,9 @@ app.title("Ender 5 Interface")
 app.configure(background="white")
 app.grid()
 
-
-movement_xyz = MovementXYZ(app)
 connect_ender_5 = ConnectEnder5(app)
+movement_xyz = MovementXYZ(app)
+create_circular_trajectory = CreateCircularTrajectory(app)
 LOG = Log(app)
 sys.stdout = LOG
 
@@ -373,8 +497,8 @@ dropdown.add_cascade(label="File", menu=datei_menu)
 dropdown.add_cascade(label="Help", menu=help_menu)
 
 
-# plot()
+plot()
 
 app.config(menu=dropdown)
-app.geometry("1200x800")
+app.geometry("1200x900")
 app.mainloop()
