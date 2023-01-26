@@ -41,7 +41,7 @@ label_settings = {"font": ("Arial", 25), "borderwidth": "10", "background": "lig
 """ Constant design/layout values"""
 
 x_0ff = 200
-y_0ff = 100
+y_0ff = 160
 spacer = 20
 btn_width = 50
 btn_height = 50
@@ -79,6 +79,12 @@ class mmPerStep:
 
 
 manual_step = mmPerStep(10)
+
+
+@dataclass
+class SerialConnections:
+    COM_Ender: None
+    COM_ScioSpec: None
 
 
 @dataclass
@@ -139,15 +145,17 @@ class ConnectEnder5:
 
     def __init__(self, app) -> None:
 
-        self.com_dropdown = ttk.Combobox(
+        self.com_dropdown_ender = ttk.Combobox(
             values=detected_com_ports,
         )
-        self.com_dropdown.bind("<<ComboboxSelected>>", self.dropdown_callback)
-        self.com_dropdown.place(x=spacer, y=spacer, width=btn_width, height=btn_height)
+        self.com_dropdown_ender.bind("<<ComboboxSelected>>", self.dropdown_callback)
+        self.com_dropdown_ender.place(
+            x=spacer, y=spacer, width=btn_width, height=btn_height
+        )
 
         self.connect_interact_button = Button(
             app,
-            text="Establish connection",
+            text="Connect Ender 5",
             bg="yellow",
             state="disabled",
             command=self.connect_interact,
@@ -158,22 +166,22 @@ class ConnectEnder5:
 
     def dropdown_callback(self, event=None):
         if event:
-            print("dropdown opened and selected:", self.com_dropdown.get())
+            print("dropdown opened and selected:", self.com_dropdown_ender.get())
             self.connect_interact_button["state"] = "normal"
         else:
-            print("Nothing")
+            pass
 
     def connect_interact(self):
         global enderstat
 
         self.connect_interact_button["text"] = "Connecting ..."
-        print("Connection to ", str(self.com_dropdown.get()), "established.")
+        print("Connection to ", str(self.com_dropdown_ender.get()), "established.")
         time.sleep(3)
         # if condition, if serial connection is established !!!
         self.connect_interact_button["text"] = "Connection established"
         self.connect_interact_button["bg"] = "green"
         self.connect_interact_button["state"] = "disabled"
-        self.com_dropdown["state"] = "disabled"
+        self.com_dropdown_ender["state"] = "disabled"
 
         # Init Printer and drive to center:
         # Also initialise current position
@@ -188,6 +196,50 @@ class ConnectEnder5:
             abs_z_tgt=100,
         )
         plot(enderstat)
+
+
+class ConnectScioSpec:
+    def __init__(self, app) -> None:
+        self.com_dropdown_sciospec = ttk.Combobox(
+            values=detected_com_ports,
+        )
+        self.com_dropdown_sciospec.bind("<<ComboboxSelected>>", self.dropdown_callback)
+        self.com_dropdown_sciospec.place(
+            x=spacer, y=2 * spacer + btn_height, width=btn_width, height=btn_height
+        )
+
+        self.connect_interact_button = Button(
+            app,
+            text="Connect ScioSpec",
+            bg="yellow",
+            state="disabled",
+            command=self.connect_interact,
+        )
+        self.connect_interact_button.place(
+            x=2 * spacer + btn_width,
+            y=2 * spacer + btn_height,
+            width=x_0ff - spacer,
+            height=btn_height,
+        )
+
+    def dropdown_callback(self, event=None):
+        if event:
+            print("dropdown opened and selected:", self.com_dropdown_sciospec.get())
+            self.connect_interact_button["state"] = "normal"
+        else:
+            pass
+
+    def connect_interact(self):
+
+        self.connect_interact_button["text"] = "Connecting ..."
+        print("Connection to ", str(self.com_dropdown_sciospec.get()), "established.")
+        time.sleep(3)
+        # if condition, if serial connection is established !!!
+        self.connect_interact_button["text"] = "Connection established"
+        self.connect_interact_button["bg"] = "green"
+        self.connect_interact_button["state"] = "disabled"
+        self.com_dropdown_sciospec["state"] = "disabled"
+        # Probably a callback message from the ScioSpec device.
 
 
 class TankSelect:
@@ -491,9 +543,7 @@ class CreateCircularTrajectory:
             height=btn_height,
         )
 
-        self.compute_trajectory = Button(
-            app, text="Set", command=compute_trajectory
-        )
+        self.compute_trajectory = Button(app, text="Set", command=compute_trajectory)
         self.compute_trajectory.place(
             x=x_0ff + 4 * btn_width + spacer,
             y=y_0ff + 5 * btn_height + 2 * spacer,
@@ -600,6 +650,7 @@ app.configure(background="white")
 app.grid()
 
 connect_ender_5 = ConnectEnder5(app)
+connect_sciospec = ConnectScioSpec(app)
 movement_xyz = MovementXYZ(app)
 tankselect = TankSelect()
 stepwidthselect = StepWidthSelect(app)
@@ -621,5 +672,5 @@ dropdown.add_cascade(label="Help", menu=help_menu)
 plot(enderstat)
 
 app.config(menu=dropdown)
-app.geometry("1200x900")
+app.geometry("1200x800")
 app.mainloop()
