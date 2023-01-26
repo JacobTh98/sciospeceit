@@ -146,7 +146,7 @@ class CircleDrivePattern:
     abs_z_posis: List[Union[int, float]]
     motion_speed: List[Union[int, float]]
     n_points: int
-    actual_point: Union[None, int]
+    actual_point: int
 
 
 circledrivepattern = CircleDrivePattern(
@@ -159,7 +159,7 @@ circledrivepattern = CircleDrivePattern(
     abs_z_posis=enderstat.abs_z_pos,
     motion_speed=enderstat.motion_speed,
     n_points=len(compute_abs_x_y_from_r_phi(100, 10)[0]),
-    actual_point=None,  # None = Homeposition, Alle anderen sind Indizes für x,y
+    actual_point=0,
 )
 
 
@@ -179,7 +179,7 @@ class ConnectEnder5:
         self.com_dropdown_ender = ttk.Combobox(values=detected_com_ports)
         self.com_dropdown_ender.bind("<<ComboboxSelected>>", self.dropdown_callback)
         self.com_dropdown_ender.place(
-            x=spacer, y=spacer, width=btn_width, height=btn_height
+            x=spacer, y=spacer, width=btn_width + spacer, height=btn_height
         )
 
         self.connect_interact_button = Button(
@@ -190,7 +190,7 @@ class ConnectEnder5:
             command=self.connect_interact,
         )
         self.connect_interact_button.place(
-            x=2 * spacer + btn_width, y=spacer, width=x_0ff - spacer, height=btn_height
+            x=3 * spacer + btn_width, y=spacer, width=x_0ff - spacer, height=btn_height
         )
 
     def dropdown_callback(self, event=None):
@@ -246,7 +246,10 @@ class ConnectScioSpec:
         )
         self.com_dropdown_sciospec.bind("<<ComboboxSelected>>", self.dropdown_callback)
         self.com_dropdown_sciospec.place(
-            x=spacer, y=2 * spacer + btn_height, width=btn_width, height=btn_height
+            x=spacer,
+            y=2 * spacer + btn_height,
+            width=btn_width + spacer,
+            height=btn_height,
         )
 
         self.connect_interact_button = Button(
@@ -257,7 +260,7 @@ class ConnectScioSpec:
             command=self.connect_interact,
         )
         self.connect_interact_button.place(
-            x=2 * spacer + btn_width,
+            x=3 * spacer + btn_width,
             y=2 * spacer + btn_height,
             width=x_0ff - spacer,
             height=btn_height,
@@ -290,9 +293,9 @@ class TankSelect:
         self.tnk_dropdown.current(0)
         self.tnk_dropdown.bind("<<ComboboxSelected>>", self.dropdown_callback)
         self.tnk_dropdown.place(
-            x=2 * spacer + btn_width + x_0ff,
+            x=3 * spacer + btn_width + x_0ff,
             y=spacer,
-            width=2 * btn_width,
+            width=2 * btn_width + 2 * spacer,
             height=btn_height,
         )
 
@@ -324,14 +327,14 @@ class StepWidthSelect:
         self.stp_wdth_dropdown.current(2)
         self.stp_wdth_dropdown.bind("<<ComboboxSelected>>", self.dropdown_callback)
         self.stp_wdth_dropdown.place(
-            x=x_0ff + 4 * btn_width + spacer,
+            x=x_0ff + 4 * btn_width + 3 * spacer,
             y=spacer,
             width=btn_width,
             height=btn_height,
         )
         self.mm_ps_label = Label(app, text="mm/step")
         self.mm_ps_label.place(
-            x=x_0ff + 5 * btn_width + spacer,
+            x=x_0ff + 5 * btn_width + 3 * spacer,
             y=spacer,
             width=btn_width,
             height=btn_height,
@@ -599,80 +602,94 @@ class CreateCircularTrajectory:
             height=btn_height,
         )
 
-        self.radius_input_btn = Button(app, text="r=", command=self.set_r_values)
-        self.radius_input_btn.place(
+        self.radius_entry = Entry(app)
+        self.radius_entry.place(
             x=spacer,
             y=y_0ff + 5 * btn_height + 2 * spacer,
             width=btn_width,
             height=btn_height,
         )
-
-        self.radius_entry = Entry(app)
-        self.radius_entry.place(
-            x=2 * spacer + btn_width,
-            y=y_0ff + 5 * btn_height + 2 * spacer,
-            width=btn_width,
-            height=btn_height,
-        )
         self.radius_unit = Label(app, text="mm").place(
-            x=2 * spacer + 2 * btn_width,
+            x=spacer + btn_width,
             y=y_0ff + 5 * btn_height + 2 * spacer,
             width=btn_width // 2,
             height=btn_height,
         )
-
-        self.phi_input_btn = Button(app, text="phi=", command=self.set_phi_values)
-        self.phi_input_btn.place(
-            x=3 * spacer + 2 * btn_width + btn_width // 2,
-            y=y_0ff + 5 * btn_height + 2 * spacer,
-            width=btn_width,
-            height=btn_height,
-        )
         self.phi_entry = Entry(app)
         self.phi_entry.place(
-            x=5 * spacer + 2 * btn_width + btn_width,
+            x=2 * spacer + btn_width + btn_width // 2,
             y=y_0ff + 5 * btn_height + 2 * spacer,
             width=btn_width,
             height=btn_height,
         )
         self.phi_unit = Label(app, text="step/360°").place(
-            x=5 * spacer + 3 * btn_width + btn_width,
+            x=2 * spacer + 2 * btn_width + btn_width // 2,
             y=y_0ff + 5 * btn_height + 2 * spacer,
             width=btn_width + btn_width // 2,
             height=btn_height,
         )
 
-        self.compute_trajectory = Button(app, text="Set", command=compute_trajectory)
-        self.compute_trajectory.place(
-            x=x_0ff + 4 * btn_width + spacer,
+        self.compute_trajectory_btn = Button(
+            app, text="Set", command=self.compute_trajectory
+        )
+        self.compute_trajectory_btn.place(
+            x=3 * spacer + 4 * btn_width,
             y=y_0ff + 5 * btn_height + 2 * spacer,
             width=btn_width,
             height=btn_height,
         )
 
-    def set_r_values(self):
-        print("r=", self.radius_entry.get())
+        self.next_step_btn = Button(
+            app, text="Next step", command=self.next_trajectory_step, state="disabled"
+        )
+        self.next_step_btn.place(
+            x=spacer,
+            y=y_0ff + 6 * btn_height + 3 * spacer,
+            width=2 * btn_width,
+            height=btn_height,
+        )
+
+        self.auto_step_btn = Button(
+            app, text="Auto drive", command=self.auto_trajectory_drive, state="disabled"
+        )
+        self.auto_step_btn.place(
+            x=2 * spacer + 2 * btn_width,
+            y=y_0ff + 6 * btn_height + 3 * spacer,
+            width=2 * btn_width,
+            height=btn_height,
+        )
+
+    def compute_trajectory(self):
+        """Computes rajectory"""
         circledrivepattern.radius = int(self.radius_entry.get())
-
-    def set_phi_values(self):
-        print("r=", self.phi_entry.get())
         circledrivepattern.phi_steps = int(self.phi_entry.get())
+        self.next_step_btn["state"] = "normal"
+        self.auto_step_btn["state"] = "normal"
 
+        circledrivepattern.active = True
+        circledrivepattern.wait_at_pos = 1
+        x, y = compute_abs_x_y_from_r_phi(
+            circledrivepattern.radius, circledrivepattern.phi_steps
+        )
+        circledrivepattern.abs_x_posis = x
+        circledrivepattern.abs_y_posis = y
+        circledrivepattern.abs_z_posis = enderstat.abs_z_pos
+        circledrivepattern.motion_speed = enderstat.motion_speed
+        plot(enderstat, circledrivepattern)
 
-def compute_trajectory():
-    # Already implemented.
-    """Connection between dataclasses and the object oriented classes in tkkinter has to be done."""
-    circledrivepattern.active = True
-    circledrivepattern.wait_at_pos = 1
-    x, y = compute_abs_x_y_from_r_phi(
-        circledrivepattern.radius, circledrivepattern.phi_steps
-    )
-    circledrivepattern.abs_x_posis = x
-    circledrivepattern.abs_y_posis = y
-    circledrivepattern.abs_z_posis = enderstat.abs_z_pos
-    circledrivepattern.motion_speed = enderstat.motion_speed
-    plot(enderstat, circledrivepattern)
-    print(circledrivepattern)
+    def next_trajectory_step(self):
+        print(circledrivepattern.actual_point)
+        enderstat.abs_x_tgt = circledrivepattern.abs_x_posis[0]
+        enderstat.abs_y_tgt = circledrivepattern.abs_y_posis[0]
+        # move_to_absolute_x_y(COM_Ender, enderstat)
+        circledrivepattern.abs_x_posis = circledrivepattern.abs_x_posis[1:]
+        circledrivepattern.abs_y_posis = circledrivepattern.abs_y_posis[1:]
+
+        plot(enderstat, circledrivepattern)
+        circledrivepattern.actual_point += 1
+
+    def auto_trajectory_drive(self):
+        pass
 
 
 def plot(enderstat: Ender5Stat, cdp: CircleDrivePattern = circledrivepattern) -> None:
@@ -777,7 +794,7 @@ grid_dict = {"sticky": "we", "ipadx": "10"}
 """Main Init"""
 app = Tk()
 app.title("Ender 5 Interface")
-app.configure(background="white")
+app.configure(background="#1A5175")
 app.grid()
 
 connect_ender_5 = ConnectEnder5(app)
@@ -803,5 +820,5 @@ dropdown.add_cascade(label="Help", menu=help_menu)
 plot(enderstat)
 
 app.config(menu=dropdown)
-app.geometry("1200x800")
+app.geometry("1150x800")
 app.mainloop()
