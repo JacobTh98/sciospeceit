@@ -151,7 +151,7 @@ class CircleDrivePattern:
 
 circledrivepattern = CircleDrivePattern(
     active=False,
-    wait_at_pos=1,
+    wait_at_pos=1,  # time to wait in [s]
     radius=100,
     phi_steps=10,
     abs_x_posis=compute_abs_x_y_from_r_phi(100, 10)[0],
@@ -185,7 +185,7 @@ class ConnectEnder5:
         self.connect_interact_button = Button(
             app,
             text="Connect Ender 5",
-            bg="yellow",
+            bg="#FBC86C",
             state="disabled",
             command=self.connect_interact,
         )
@@ -255,7 +255,7 @@ class ConnectScioSpec:
         self.connect_interact_button = Button(
             app,
             text="Connect ScioSpec",
-            bg="yellow",
+            bg="#FBC86C",
             state="disabled",
             command=self.connect_interact,
         )
@@ -277,7 +277,6 @@ class ConnectScioSpec:
 
         self.connect_interact_button["text"] = "Connecting ..."
         print("Connection to ", str(self.com_dropdown_sciospec.get()), "established.")
-        time.sleep(3)
         # if condition, if serial connection is established !!!
         self.connect_interact_button["text"] = "Connection established"
         self.connect_interact_button["bg"] = "green"
@@ -681,15 +680,20 @@ class CreateCircularTrajectory:
         print(circledrivepattern.actual_point)
         enderstat.abs_x_tgt = circledrivepattern.abs_x_posis[0]
         enderstat.abs_y_tgt = circledrivepattern.abs_y_posis[0]
-        # move_to_absolute_x_y(COM_Ender, enderstat)
+        move_to_absolute_x_y(COM_Ender, enderstat)
         circledrivepattern.abs_x_posis = circledrivepattern.abs_x_posis[1:]
         circledrivepattern.abs_y_posis = circledrivepattern.abs_y_posis[1:]
-
+        enderstat.abs_x_pos = enderstat.abs_x_tgt
+        enderstat.abs_y_pos = enderstat.abs_y_tgt
         plot(enderstat, circledrivepattern)
         circledrivepattern.actual_point += 1
 
     def auto_trajectory_drive(self):
-        pass
+        while len(circledrivepattern.abs_x_posis) != 0:
+            time.sleep(circledrivepattern.wait_at_pos)
+            self.next_trajectory_step()
+            time.sleep(circledrivepattern.wait_at_pos)
+            plot(enderstat, circledrivepattern)
 
 
 def plot(enderstat: Ender5Stat, cdp: CircleDrivePattern = circledrivepattern) -> None:
@@ -784,7 +788,7 @@ Contct: jacob.thoenes@uni-rostock.de \n\
 def action_get_info_dialog_traj():
     m_text = "\
 ************************\n\
-Add infos regarding the trajectory definition here...\n\
+TBD\n\
 ************************"
     messagebox.showinfo(message=m_text, title="Info")
 
