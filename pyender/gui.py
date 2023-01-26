@@ -13,6 +13,25 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 plt.rcParams["font.size"] = 5
 plt.rcParams["figure.autolayout"] = True
 
+"""Ender Imports"""
+
+try:
+    import serial
+    from serial import Serial
+except ImportError:
+    print("Could not import module: serial")
+from datetime import datetime
+import sys
+
+from ender5control import (
+    x_y_home,
+    x_y_center,
+    turn_off_fan,
+    move_to_absolute_x,
+    move_to_absolute_y,
+    move_to_absolute_z,
+    move_to_absolute_x_y,
+)
 
 # import serial.tools.list_ports
 from tkinter import (
@@ -72,6 +91,9 @@ detected_com_ports = ["COM3", "COM4"]
 tank_architectures = ["select tank", "medium", "high"]
 step_width = [0.1, 1, 10]
 
+center_x_y = 180
+center_z = 100
+
 
 @dataclass
 class mmPerStep:
@@ -88,8 +110,8 @@ class SerialConnections:
 
 
 @dataclass
-class Ender5Position:
-    """Class for keeping x,y,z, and motion speed together"""
+class Ender5Stat:
+    """Class for keeping everything together"""
 
     abs_x_pos: Union[int, float]
     abs_y_pos: Union[int, float]
@@ -105,7 +127,7 @@ class Ender5Position:
 
 
 # First Initialization
-enderstat = Ender5Position(
+enderstat = Ender5Stat(
     abs_x_pos=350,
     abs_y_pos=350,
     abs_z_pos=50,
@@ -172,30 +194,40 @@ class ConnectEnder5:
             pass
 
     def connect_interact(self):
-        global enderstat
+        global enderstat, COM_Ender
 
         self.connect_interact_button["text"] = "Connecting ..."
         print("Connection to ", str(self.com_dropdown_ender.get()), "established.")
-        time.sleep(3)
-        # if condition, if serial connection is established !!!
-        self.connect_interact_button["text"] = "Connection established"
-        self.connect_interact_button["bg"] = "green"
-        self.connect_interact_button["state"] = "disabled"
-        self.com_dropdown_ender["state"] = "disabled"
+        try:
+            COM_Ender = serial.Serial(self.com_dropdown_ender.get(), 115200)
+            time.sleep(1)
+            # if condition, if serial connection is established !!!
+            self.connect_interact_button["text"] = "Connection established"
+            self.connect_interact_button["bg"] = "green"
+            self.connect_interact_button["state"] = "disabled"
+            self.com_dropdown_ender["state"] = "disabled"
+            # print(type(COM_Ender))
+            # Init routine
+            turn_off_fan(COM_Ender)
+            enderstat.abs_x_tgt = 0
+            enderstat.abs_y_tgt = 0
+            plot(enderstat)
+            time.sleep(1)
+            print("move home")
+            x_y_home(COM_Ender, enderstat)
+            enderstat.abs_x_pos = enderstat.abs_x_tgt
+            enderstat.abs_y_pos = enderstat.abs_y_tgt
+            enderstat.abs_y_tgt = center_x_y
+            enderstat.abs_x_tgt = center_x_y
+            plot(enderstat)
+            x_y_center(COM_Ender, enderstat)
+            enderstat.abs_x_pos = enderstat.abs_x_tgt
+            enderstat.abs_y_pos = enderstat.abs_y_tgt
+            enderstat.abs_x_tgt = None
+            enderstat.abs_y_tgt = None
 
-        # Init Printer and drive to center:
-        # Also initialise current position
-        enderstat = Ender5Position(
-            abs_x_pos=0,
-            abs_y_pos=0,
-            abs_z_pos=100,
-            tank_architecture=None,
-            motion_speed=1500,
-            abs_x_tgt=180,
-            abs_y_tgt=180,
-            abs_z_tgt=100,
-        )
-        plot(enderstat)
+        except:
+            print("Can not open", self.com_dropdown_ender.get())
 
 
 class ConnectScioSpec:
@@ -413,7 +445,7 @@ class MovementXYZ:
             tickinterval=200,
             orient="vertical",
         )
-        self.motion_speed.set(1000)
+        self.motion_speed.set(1500)
         self.motion_speed.bind("<ButtonRelease-1>", self.motion_speed_callback)
         self.motion_speed.place(
             x=x_0ff + 5 * btn_width + 3 * spacer,
@@ -430,53 +462,100 @@ class MovementXYZ:
         )
 
     def set_x(self):
-        enderstat.abs_x_pos = float(self.x_set_entry.get())
+        enderstat.abs_x_tgt = float(self.x_set_entry.get())
+        plot(enderstat)
+        move_to_absolute_x(COM_Ender, enderstat)
+        enderstat.abs_x_pos = enderstat.abs_x_tgt
+        enderstat.abs_x_tgt = None
         plot(enderstat)
 
     def set_y(self):
-        enderstat.abs_y_pos = float(self.y_set_entry.get())
+        enderstat.abs_y_tgt = float(self.y_set_entry.get())
+        plot(enderstat)
+        move_to_absolute_y(COM_Ender, enderstat)
+        enderstat.abs_y_pos = enderstat.abs_y_tgt
+        enderstat.abs_y_tgt = None
         plot(enderstat)
 
     def set_z(self):
-        enderstat.abs_z_pos = float(self.z_set_entry.get())
+        enderstat.abs_z_tgt = float(self.z_set_entry.get())
+        plot(enderstat)
+        move_to_absolute_z(COM_Ender, enderstat)
+        enderstat.abs_z_pos = enderstat.abs_z_tgt
+        enderstat.abs_z_tgt = None
         plot(enderstat)
 
     def x_y_center(self):
-        enderstat.abs_y_pos = 180
-        enderstat.abs_x_pos = 180
+        enderstat.abs_x_tgt = center_x_y
+        enderstat.abs_y_tgt = center_x_y
         plot(enderstat)
+        move_to_absolute_x_y(COM_Ender, enderstat)
+        enderstat.abs_x_pos = enderstat.abs_x_tgt
+        enderstat.abs_y_pos = enderstat.abs_y_tgt
+        enderstat.abs_x_tgt = None
+        enderstat.abs_y_tgt = None
 
     def move_x_up(self):
-        enderstat.abs_x_pos += manual_step.mm_per_step
-        print(manual_step.mm_per_step)
+        enderstat.abs_x_tgt = enderstat.abs_x_pos + manual_step.mm_per_step
+        plot(enderstat)
+        move_to_absolute_x(COM_Ender, enderstat)
+        enderstat.abs_x_pos = enderstat.abs_x_tgt
+        enderstat.abs_x_tgt = None
         plot(enderstat)
 
     def move_x_down(self):
-        enderstat.abs_x_pos -= manual_step.mm_per_step
+        enderstat.abs_x_tgt = enderstat.abs_x_pos - manual_step.mm_per_step
+        plot(enderstat)
+        move_to_absolute_x(COM_Ender, enderstat)
+        enderstat.abs_x_pos = enderstat.abs_x_tgt
+        enderstat.abs_x_tgt = None
         plot(enderstat)
 
     def move_y_up(self):
-        enderstat.abs_y_pos += manual_step.mm_per_step
+        print(type(enderstat.motion_speed))
+        enderstat.abs_y_tgt = enderstat.abs_y_pos + manual_step.mm_per_step
+        print("2", type(enderstat.motion_speed))
+        plot(enderstat)
+        move_to_absolute_y(COM_Ender, enderstat)
+        enderstat.abs_y_pos = enderstat.abs_y_tgt
+        enderstat.abs_y_tgt = None
         plot(enderstat)
 
     def move_y_down(self):
-        enderstat.abs_y_pos -= manual_step.mm_per_step
+        enderstat.abs_y_tgt = enderstat.abs_y_pos - manual_step.mm_per_step
+        plot(enderstat)
+        move_to_absolute_y(COM_Ender, enderstat)
+        enderstat.abs_y_pos = enderstat.abs_y_tgt
+        enderstat.abs_y_tgt = None
         plot(enderstat)
 
     def move_z_up(self):
-        enderstat.abs_z_pos += manual_step.mm_per_step
+        enderstat.abs_z_tgt = enderstat.abs_z_pos + manual_step.mm_per_step
+        plot(enderstat)
+        move_to_absolute_z(COM_Ender, enderstat)
+        enderstat.abs_z_pos = enderstat.abs_z_tgt
+        enderstat.abs_z_tgt = None
         plot(enderstat)
 
     def move_z_down(self):
-        enderstat.abs_z_pos -= manual_step.mm_per_step
+        enderstat.abs_z_tgt = enderstat.abs_z_pos - manual_step.mm_per_step
+        plot(enderstat)
+        move_to_absolute_z(COM_Ender, enderstat)
+        enderstat.abs_z_pos = enderstat.abs_z_tgt
+        enderstat.abs_z_tgt = None
         plot(enderstat)
 
     def z_center(self):
-        enderstat.abs_z_pos = 100
+        enderstat.abs_z_tgt = center_z
+        plot(enderstat)
+        move_to_absolute_z(COM_Ender, enderstat)
+        enderstat.abs_z_pos = enderstat.abs_z_tgt
+        enderstat.abs_z_tgt = None
         plot(enderstat)
 
     def motion_speed_callback(self, event):
-        print("Set motion speed to", self.motion_speed.get(), "[mm/min]")
+        enderstat.motion_speed = float(self.motion_speed.get())
+        print("Set motion speed to", float(self.motion_speed.get()), "[mm/min]")
 
 
 class CreateCircularTrajectory:
@@ -564,12 +643,12 @@ def compute_trajectory():
     print("computation has to be substituted... (TBD)")
 
 
-def plot(enderstat: Ender5Position) -> None:
+def plot(enderstat: Ender5Stat) -> None:
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(8, 5))
 
     ax1.set_title("Top view")
     ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".")
-    if enderstat.abs_x_tgt is not None:
+    if enderstat.abs_x_tgt is not None or enderstat.abs_y_tgt is not None:
         ax1.scatter(enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*")
     ax1.set_ylabel("absolute y[mm]")
     ax1.set_xlabel("absolute x[mm]")
@@ -605,8 +684,13 @@ def plot(enderstat: Ender5Position) -> None:
     )
     ax2.scatter(enderstat.abs_x_pos, 349, marker=".", label="Currently")
     if enderstat.abs_z_tgt is not None:
-        ax2.scatter(
-            enderstat.abs_x_tgt, enderstat.abs_z_tgt, marker="*", label="Target"
+        ax2.hlines(
+            enderstat.abs_z_tgt,
+            100,
+            225,
+            linestyles="solid",
+            color="black",
+            label="z-table",
         )
     ax2.set_ylabel("absolute z[mm]")
     ax2.set_xlabel("absolute x[mm]")

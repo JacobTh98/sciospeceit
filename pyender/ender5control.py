@@ -8,10 +8,27 @@ except ImportError:
 import time
 from datetime import datetime
 import numpy as np
-import matplotlib.pyplot as plt
 import sys
+import glob
 
 # https://reprap.org/wiki/G-code#M17:_Enable.2FPower_all_stepper_motors
+
+from dataclasses import dataclass
+from typing import Union
+
+
+@dataclass
+class Ender5Stat:
+    """Class for keeping everything together"""
+
+    abs_x_pos: Union[int, float]
+    abs_y_pos: Union[int, float]
+    abs_z_pos: Union[int, float]
+    tank_architecture: Union[None, str]
+    motion_speed: Union[int, float]
+    abs_x_tgt: Union[None, int, float]
+    abs_y_tgt: Union[None, int, float]
+    abs_z_tgt: Union[None, int, float]
 
 
 def available_serial_ports() -> list:
@@ -64,79 +81,82 @@ def connect_COM_port(port: str = "COM4", baudrate: int = 115200, timeout: int = 
 ## Commands for Ender 5
 
 
-def move_to_absolute_x(x_abs, F_mm_min: int = 1500):
+def move_to_absolute_x(ser, enderstat: Ender5Stat):
     """
-    x_abs : absolute x position
-    F_mm_min : movement speed in [mm/min]
+    enderstat.abs_x_tgt : absolute x position
+    enderstat.motion_speed : movement speed in [mm/min]
     """
-    command(ser, f"G0 X{x_abs} F{F_mm_min}\r\n")
+    command(ser, f"G0 X{enderstat.abs_x_tgt} F{enderstat.motion_speed}\r\n")
 
 
-def move_to_absolute_y(y_abs, F_mm_min: int = 1500):
+def move_to_absolute_y(ser, enderstat: Ender5Stat):
     """
-    x_abs : absolute x position
-    F_mm_min : movement speed in [mm/min]
+    enderstat.abs_x_tgt : absolute x position
+    enderstat.motion_speed : movement speed in [mm/min]
     """
-    command(ser, f"G0 Y{y_abs} F{F_mm_min}\r\n")
+    command(ser, f"G0 Y{enderstat.abs_y_tgt} F{enderstat.motion_speed}\r\n")
 
 
-def move_to_absolute_z(z_abs, F_mm_min: int = 1500):
+def move_to_absolute_z(ser, enderstat: Ender5Stat):
     """
-    x_abs : absolute x position
-    F_mm_min : movement speed in [mm/min]
+    enderstat.abs_x_tgt : absolute x position
+    enderstat.motion_speed : movement speed in [mm/min]
     """
-    command(ser, f"G0 Z{z_abs} F{F_mm_min}\r\n")
+    command(ser, f"G0 Z{enderstat.abs_z_tgt} F{enderstat.motion_speed}\r\n")
 
 
-def move_to_absolute_x_y(x_abs, y_abs, F_mm_min: int = 1500):
+def move_to_absolute_x_y(ser, enderstat: Ender5Stat):
     """
-    x_abs : absolute x position
-    y_abs : absolute y position
-    F_mm_min : movement speed in [mm/min]
+    enderstat.abs_x_tgt : absolute x position
+    enderstat.abs_y_tgt : absolute y position
+    enderstat.motion_speed : movement speed in [mm/min]
     """
-    command(ser, f"G0 X{x_abs} Y{y_abs} F{F_mm_min}\r\n")
+    command(
+        ser,
+        f"G0 X{enderstat.abs_x_tgt} Y{enderstat.abs_y_tgt} F{enderstat.motion_speed}\r\n",
+    )
 
 
-def disable_steppers():
+def disable_steppers(ser):
     command(ser, "M18 X Y Z E\r\n")
 
 
-def enable_steppers():
+def enable_steppers(ser):
     command(ser, "M17 X Y Z E\r\n")
 
 
-def x_y_home(F_mm_min: int = 1500):
-    command(ser, f"G28 X0 Y0 F{F_mm_min}\r\n")
+def x_y_home(ser, enderstat: Ender5Stat):
+    command(ser, f"G28 X0 Y0 F{enderstat.motion_speed}\r\n")
 
 
-def x_y_center(F_mm_min: int = 1500):
-    command(ser, f"G0 X180 Y180 F{F_mm_min}\r\n")
+def x_y_center(ser, enderstat: Ender5Stat):
+    command(ser, f"G0 X180 Y180 F{enderstat.motion_speed}\r\n")
 
 
-def turn_of_fan():
+def turn_off_fan(ser):
     command(ser, "M106 S0\r\n")
 
 
-def init_axis():
-    x_y_home()
-    x_y_center()
-    turn_of_fan()
+def init_axis(ser):
+    x_y_home(ser)
+    x_y_center(ser)
+    turn_off_fan(ser)
     print("X,Y axis are centered at X(180), Y(180)")
 
 
-def circle_clockwise(X, Y, I=180, J=180, F_mm_min: int = 1500, clock: bool = True):
+def circle_clockwise(X, Y, enderstat: Ender5Stat, I=180, J=180, clock: bool = True):
     """
     clock : True = clockwise, False = counter-clockwise
     X : The position to move to on the X axis
     Y : The position to move to on the Y axis
     I : The point in X space from the current X position to maintain a constant distance from
     J : The point in Y space from the current Y position to maintain a constant distance from
-    F_mm_min : The feedrate per minute of the move between the starting point and ending point (if supplied)
+    enderstat.motion_speed : The feedrate per minute of the move between the starting point and ending point (if supplied)
     """
     if clock:
-        command(ser, f"G2 X{X} Y{Y} I{I} J{J} F{F_mm_min}\r\n")
+        command(ser, f"G2 X{X} Y{Y} I{I} J{J} F{enderstat.motion_speed}\r\n")
     else:
-        command(ser, f"G3 X{X} Y{Y} I{I} J{J} F{F_mm_min}\r\n")
+        command(ser, f"G3 X{X} Y{Y} I{I} J{J} F{enderstat.motion_speed}\r\n")
 
 
 def command(ser, command):
