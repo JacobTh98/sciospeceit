@@ -10,7 +10,7 @@ from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-plt.rcParams["font.size"] = 5
+plt.rcParams["font.size"] = 9
 plt.rcParams["figure.autolayout"] = True
 
 """Ender Imports"""
@@ -31,6 +31,8 @@ from ender5control import (
     move_to_absolute_y,
     move_to_absolute_z,
     move_to_absolute_x_y,
+    available_serial_ports,
+    compute_abs_x_y_from_r_phi,
 )
 
 # import serial.tools.list_ports
@@ -87,12 +89,12 @@ class Log:
         self.log.delete("1.0", END)
 
 
-detected_com_ports = ["COM3", "COM4"]
+detected_com_ports = available_serial_ports()  # ["COM3", "COM4"]
 tank_architectures = ["select tank", "medium", "high"]
 step_width = [0.1, 1, 10]
 
 center_x_y = 180
-center_z = 100
+center_z = 0
 
 
 @dataclass
@@ -101,12 +103,6 @@ class mmPerStep:
 
 
 manual_step = mmPerStep(10)
-
-
-@dataclass
-class SerialConnections:
-    COM_Ender: None
-    COM_ScioSpec: None
 
 
 @dataclass
@@ -130,7 +126,7 @@ class Ender5Stat:
 enderstat = Ender5Stat(
     abs_x_pos=350,
     abs_y_pos=350,
-    abs_z_pos=50,
+    abs_z_pos=0,
     tank_architecture=None,
     motion_speed=1500,
     abs_x_tgt=None,
@@ -141,22 +137,35 @@ enderstat = Ender5Stat(
 
 @dataclass
 class CircleDrivePattern:
-    radius: Union[int, float]
-    phi_steps: Union[int, float]
-    abs_x_pos: List[Union[int, float]]
-    abs_y_pos: List[Union[int, float]]
-    abs_z_pos: List[Union[int, float]]
+    active: bool
+    wait_at_pos: int  # [s]
+    radius: Union[int, float]  # [mm]
+    phi_steps: Union[int, float]  # [degree/step]
+    abs_x_posis: List[Union[int, float]]
+    abs_y_posis: List[Union[int, float]]
+    abs_z_posis: List[Union[int, float]]
     motion_speed: List[Union[int, float]]
+    n_points: int
+    actual_point: Union[None, int]
+
+
+circledrivepattern = CircleDrivePattern(
+    active=False,
+    wait_at_pos=1,
+    radius=100,
+    phi_steps=10,
+    abs_x_posis=compute_abs_x_y_from_r_phi(100, 10)[0],
+    abs_y_posis=compute_abs_x_y_from_r_phi(100, 10)[1],
+    abs_z_posis=enderstat.abs_z_pos,
+    motion_speed=enderstat.motion_speed,
+    n_points=len(compute_abs_x_y_from_r_phi(100, 10)[0]),
+    actual_point=None,  # None = Homeposition, Alle anderen sind Indizes für x,y
+)
 
 
 @dataclass
 class MultipleCircleDrivePattern:
-    radius: List[Union[int, float]]
-    phi_steps: List[Union[int, float]]
-    abs_x_pos: List[Union[int, float]]
-    abs_y_pos: List[Union[int, float]]
-    abs_z_pos: List[Union[int, float]]
-    motion_speed: List[Union[int, float]]
+    pass
 
 
 class ConnectEnder5:
@@ -167,9 +176,7 @@ class ConnectEnder5:
 
     def __init__(self, app) -> None:
 
-        self.com_dropdown_ender = ttk.Combobox(
-            values=detected_com_ports,
-        )
+        self.com_dropdown_ender = ttk.Combobox(values=detected_com_ports)
         self.com_dropdown_ender.bind("<<ComboboxSelected>>", self.dropdown_callback)
         self.com_dropdown_ender.place(
             x=spacer, y=spacer, width=btn_width, height=btn_height
@@ -204,6 +211,7 @@ class ConnectEnder5:
             # if condition, if serial connection is established !!!
             self.connect_interact_button["text"] = "Connection established"
             self.connect_interact_button["bg"] = "green"
+            self.connect_interact_button["fg"] = "black"
             self.connect_interact_button["state"] = "disabled"
             self.com_dropdown_ender["state"] = "disabled"
             # print(type(COM_Ender))
@@ -225,6 +233,7 @@ class ConnectEnder5:
             enderstat.abs_y_pos = enderstat.abs_y_tgt
             enderstat.abs_x_tgt = None
             enderstat.abs_y_tgt = None
+            print("Initialization done.")
 
         except:
             print("Can not open", self.com_dropdown_ender.get())
@@ -269,6 +278,7 @@ class ConnectScioSpec:
         # if condition, if serial connection is established !!!
         self.connect_interact_button["text"] = "Connection established"
         self.connect_interact_button["bg"] = "green"
+        self.connect_interact_button["fg"] = "black"
         self.connect_interact_button["state"] = "disabled"
         self.com_dropdown_sciospec["state"] = "disabled"
         # Probably a callback message from the ScioSpec device.
@@ -291,6 +301,16 @@ class TankSelect:
             tnk = self.tnk_dropdown.get()
             print(tnk, "tank selected.")
             enderstat.tank_architecture = tnk
+            print("Sinking z level.")
+            if tnk == "medium":
+                enderstat.abs_z_tgt = 200
+            if tnk == "high":
+                enderstat.abs_z_tgt = 250
+            if tnk == "select tank":
+                enderstat.abs_z_tgt = enderstat.abs_z_pos
+            move_to_absolute_z(COM_Ender, enderstat)
+            enderstat.abs_z_pos = enderstat.abs_z_tgt
+            enderstat.abs_z_tgt = None
             plot(enderstat)
         else:
             pass
@@ -530,7 +550,7 @@ class MovementXYZ:
         plot(enderstat)
 
     def move_z_up(self):
-        enderstat.abs_z_tgt = enderstat.abs_z_pos + manual_step.mm_per_step
+        enderstat.abs_z_tgt = enderstat.abs_z_pos - manual_step.mm_per_step
         plot(enderstat)
         move_to_absolute_z(COM_Ender, enderstat)
         enderstat.abs_z_pos = enderstat.abs_z_tgt
@@ -538,7 +558,7 @@ class MovementXYZ:
         plot(enderstat)
 
     def move_z_down(self):
-        enderstat.abs_z_tgt = enderstat.abs_z_pos - manual_step.mm_per_step
+        enderstat.abs_z_tgt = enderstat.abs_z_pos + manual_step.mm_per_step
         plot(enderstat)
         move_to_absolute_z(COM_Ender, enderstat)
         enderstat.abs_z_pos = enderstat.abs_z_tgt
@@ -632,24 +652,38 @@ class CreateCircularTrajectory:
 
     def set_r_values(self):
         print("r=", self.radius_entry.get())
+        circledrivepattern.radius = int(self.radius_entry.get())
 
     def set_phi_values(self):
         print("r=", self.phi_entry.get())
+        circledrivepattern.phi_steps = int(self.phi_entry.get())
 
 
 def compute_trajectory():
     # Already implemented.
     """Connection between dataclasses and the object oriented classes in tkkinter has to be done."""
-    print("computation has to be substituted... (TBD)")
+    circledrivepattern.active = True
+    circledrivepattern.wait_at_pos = 1
+    x, y = compute_abs_x_y_from_r_phi(
+        circledrivepattern.radius, circledrivepattern.phi_steps
+    )
+    circledrivepattern.abs_x_posis = x
+    circledrivepattern.abs_y_posis = y
+    circledrivepattern.abs_z_posis = enderstat.abs_z_pos
+    circledrivepattern.motion_speed = enderstat.motion_speed
+    plot(enderstat, circledrivepattern)
+    print(circledrivepattern)
 
 
-def plot(enderstat: Ender5Stat) -> None:
+def plot(enderstat: Ender5Stat, cdp: CircleDrivePattern = circledrivepattern) -> None:
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(8, 5))
 
     ax1.set_title("Top view")
     ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".")
     if enderstat.abs_x_tgt is not None or enderstat.abs_y_tgt is not None:
         ax1.scatter(enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*")
+    if cdp.active == True:
+        ax1.scatter(cdp.abs_x_posis, cdp.abs_y_posis, marker="*")
     ax1.set_ylabel("absolute y[mm]")
     ax1.set_xlabel("absolute x[mm]")
     ax1.set_xlim((0, 350))
@@ -664,7 +698,7 @@ def plot(enderstat: Ender5Stat) -> None:
     if enderstat.tank_architecture is not None:
         if enderstat.tank_architecture == "medium":
             tank_archtctrs = [
-                Rectangle((100, enderstat.abs_z_pos), width=150, height=100)
+                Rectangle((100, 400 - enderstat.abs_z_pos), width=150, height=100)
             ]
             pc = PatchCollection(
                 tank_archtctrs, facecolor="lightsteelblue", alpha=0.8, edgecolor="black"
@@ -672,17 +706,28 @@ def plot(enderstat: Ender5Stat) -> None:
             ax2.add_collection(pc)
         if enderstat.tank_architecture == "high":
             tank_archtctrs = [
-                Rectangle((100, enderstat.abs_z_pos), width=150, height=150)
+                Rectangle((100, 400 - enderstat.abs_z_pos), width=150, height=150)
             ]
+            pc = PatchCollection(
+                tank_archtctrs, facecolor="lightsteelblue", alpha=0.8, edgecolor="black"
+            )
+            ax2.add_collection(pc)
+        if enderstat.tank_architecture == "select tank":
+            tank_archtctrs = [Rectangle((0, 0), width=0, height=0)]  # delete tank
             pc = PatchCollection(
                 tank_archtctrs, facecolor="lightsteelblue", alpha=0.8, edgecolor="black"
             )
             ax2.add_collection(pc)
 
     ax2.hlines(
-        enderstat.abs_z_pos, 50, 300, linestyles="solid", color="black", label="z-table"
+        400 - enderstat.abs_z_pos,
+        50,
+        300,
+        linestyles="solid",
+        color="black",
+        label="z-table",
     )
-    ax2.scatter(enderstat.abs_x_pos, 349, marker=".", label="Currently")
+    ax2.scatter(enderstat.abs_x_pos, 0, marker=".", label="Currently")
     if enderstat.abs_z_tgt is not None:
         ax2.hlines(
             enderstat.abs_z_tgt,
@@ -693,16 +738,18 @@ def plot(enderstat: Ender5Stat) -> None:
             label="z-table",
         )
     ax2.set_ylabel("absolute z[mm]")
+    ax2.set_yticks(np.arange(0, 401, 50)[::-1])
+    ax2.set_yticklabels(np.arange(0, 401, 50))
     ax2.set_xlabel("absolute x[mm]")
     ax2.set_xlim((0, 350))
-    ax2.set_ylim((0, 350))
+    ax2.set_ylim((0, 400))
     ax2.grid()
     ax2.legend()
     # ax2.hlines(180, 0, 200, linestyles="dotted", color="black")
 
     canvas = FigureCanvasTkAgg(fig, master=app)
     canvas.draw()
-    canvas.get_tk_widget().place(x=750, y=spacer, width=400, height=800)
+    canvas.get_tk_widget().place(x=750, y=0, width=400, height=800)
     plt.close(fig)
 
 

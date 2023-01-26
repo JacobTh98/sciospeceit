@@ -127,6 +127,7 @@ def enable_steppers(ser):
 
 def x_y_home(ser, enderstat: Ender5Stat):
     command(ser, f"G28 X0 Y0 F{enderstat.motion_speed}\r\n")
+    command(ser, f"G28 Z0 F{enderstat.motion_speed}\r\n")
 
 
 def x_y_center(ser, enderstat: Ender5Stat):
@@ -188,5 +189,5 @@ def compute_abs_x_y_from_r_phi(r, phi_step) -> np.ndarray:
     angles = np.radians(np.arange(0, 360, phi_step))
     x = r * np.cos(angles) + x0
     y = r * np.sin(angles) + y0
-    print("Number of measurement points:", len(x))
+
     return x, y
