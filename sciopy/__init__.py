@@ -32,6 +32,32 @@ from .doteit import (
     convert_fulldir_doteit_to_npz,
 )
 
+from .setup_m import (
+    GeneralSystemMessages,
+    SaveSettings,
+    SoftwareReset,
+    ResetMeasurementSetup,
+    SetMeasurementSetup,
+    GetMeasurementSetup,
+    SetOutputConfiguration,
+    GetOutputConfiguration,
+    Start_StopMeasurement,
+    GetTemperature,
+    SetBatteryControll,
+    GetBatteryControll,
+    SetLEDControl,
+    GetLEDControl,
+    SetLED_Mode,
+    DisableLED_AutoMode,
+    EnableLED_AutoMode,
+    FrontIOs,
+    PowerPlugDetect,
+    GetDevideInfo,
+    TCP_ConnectionWatchdog,
+    GetFirmwareIDs,
+)
+
+
 __all__ = [
     # communication_info
     "print_syntax",
@@ -50,4 +76,27 @@ __all__ = [
     "load_pickle_to_dict",
     "convert_fulldir_doteit_to_pickle",
     "convert_fulldir_doteit_to_npz",
+    # setup_m
+    "GeneralSystemMessages",
+    "SaveSettings",
+    "SoftwareReset",
+    "ResetMeasurementSetup",
+    "SetMeasurementSetup",
+    "GetMeasurementSetup",
+    "SetOutputConfiguration",
+    "GetOutputConfiguration",
+    "Start_StopMeasurement",
+    "GetTemperature",
+    "SetBatteryControll",
+    "GetBatteryControll",
+    "SetLEDControl",
+    "GetLEDControl",
+    "SetLED_Mode",
+    "DisableLED_AutoMode",
+    "EnableLED_AutoMode",
+    "FrontIOs",
+    "PowerPlugDetect",
+    "GetDevideInfo",
+    "TCP_ConnectionWatchdog",
+    "GetFirmwareIDs",
 ]
