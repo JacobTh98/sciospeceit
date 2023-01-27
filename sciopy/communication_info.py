@@ -75,8 +75,10 @@ def print_command_list() -> None:
 
 
 def save_settings() -> None:
+    """TB"""
     print("Saved Settings: 0x90")
 
 
 def software_reset() -> None:
+    """TB"""
     print("Software reset: 0xA1")
