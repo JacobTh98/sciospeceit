@@ -90,7 +90,7 @@ Each communication frame is constructed as follows
 ## Connection opportunities
 
 **USB**
-- Named "USB-HS" (USB Full Speed) on the backplate of the ScioSpecEIT device
+- Named "USB-HS" (USB High Speed) on the backplate of the ScioSpecEIT device
 - Not galvanically isolated
 
 **Ethernet**
@@ -158,6 +158,13 @@ Installed software:
 - [x] Saline
 - [ ] Different object geometries
 - [ ] ...
+
+# Ender 5 - Gcode
+
+- https://all3dp.com/2/3d-printer-g-code-commands-list-tutorial/
+- https://www.cncprofi.eu/images/pdf/Befehle%20G-code%20D5.pdf
+- https://gcode.ws/
+
 
 # Contributors
 
