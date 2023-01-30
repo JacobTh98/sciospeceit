@@ -3,6 +3,13 @@ from typing import Union, List
 
 
 @dataclass
+class OperatingSystem:
+    system: str
+    resolution_width: int
+    resolution_height: int
+
+
+@dataclass
 class Ender5Stat:
     """Class for keeping everything together"""
 
@@ -20,7 +27,7 @@ class Ender5Stat:
 
 @dataclass
 class mmPerStep:
-    mm_per_step: Union[float, int]
+    mm_per_step: Union[int, float]
 
 
 @dataclass
@@ -32,7 +39,7 @@ class CircleDrivePattern:
     abs_x_posis: List[Union[int, float]]
     abs_y_posis: List[Union[int, float]]
     abs_z_posis: List[Union[int, float]]
-    motion_speed: List[Union[int, float]]
+    motion_speed: Union[int, float]
     n_points: int
     actual_point: int
 
@@ -44,9 +51,29 @@ class MultipleCircleDrivePattern:
 
 @dataclass
 class KartesianGridDrivePattern:
+    active: bool
+    wait_at_pos: int  # [s]
+    motion_speed: Union[int, float]
     x_start: Union[int, float]
     y_start: Union[int, float]
     x_stop: Union[int, float]
     y_stop: Union[int, float]
     x_stp_num: int
     x_stp_num: int
+    abs_x_posis: List[Union[int, float]]
+    abs_y_posis: List[Union[int, float]]
+    abs_z_pos: Union[int, float]
+    n_points: int
+    actual_point: int
+
+
+@dataclass
+class HitBoxMediumTank:
+    z_lim_height: Union[int, float]
+    r_max: Union[int, float]
+
+
+@dataclass
+class HitBoxHighTank:
+    z_lim_height: Union[int, float]
+    r_max: Union[int, float]
