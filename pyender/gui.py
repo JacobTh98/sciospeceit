@@ -6,7 +6,22 @@ from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from ender_sciospec_classes import Ender5Stat, mmPerStep, CircleDrivePattern
+try:
+    import serial
+except ImportError:
+    print("Could not import module: serial")
+
+
+import platform
+from screeninfo import get_monitors
+
+from ender_sciospec_classes import (
+    OperatingSystem,
+    Ender5Stat,
+    mmPerStep,
+    CircleDrivePattern,
+    KartesianGridDrivePattern,
+)
 
 from tkinter import (
     END,
@@ -31,18 +46,32 @@ from ender5control import (
     move_to_absolute_x_y,
     available_serial_ports,
     compute_abs_x_y_from_r_phi,
+    compute_abs_x_y_from_x_y,
 )
 
-try:
-    import serial
-except ImportError:
-    print("Could not import module: serial")
+""" Read resolution and set for visualization. """
 
-plt.rcParams["font.size"] = 9
-# if youre monitor resolution is 4k set "plt.rcParams["font.size"]=6"
+monitor = get_monitors()
+
+if type(monitor) == list:
+    monitor = monitor[0]
+
+print(monitor)
+
+op_system = OperatingSystem(
+    system=str(platform.system()),
+    resolution_width=int(monitor.width),
+    resolution_height=int(monitor.height),
+)
+
+print(op_system)
+
+if op_system.resolution_width == 3840 or op_system.resolution_height == 3840:
+    print("4k system. Setting rcParams to font size = 6.")
+    plt.rcParams["font.size"] = 6
+else:
+    plt.rcParams["font.size"] = 9
 plt.rcParams["figure.autolayout"] = True
-label_settings = {"font": ("Arial", 25), "borderwidth": "10", "background": "lightblue"}
-
 
 """ Constant design/layout values"""
 
@@ -108,6 +137,22 @@ circledrivepattern = CircleDrivePattern(
     abs_z_posis=enderstat.abs_z_pos,
     motion_speed=enderstat.motion_speed,
     n_points=len(compute_abs_x_y_from_r_phi(100, 10)[0]),
+    actual_point=0,
+)
+
+kartesiandrivepattern = KartesianGridDrivePattern(
+    active=False,
+    wait_at_pos=1,
+    motion_speed=enderstat.motion_speed,
+    x_start=160,
+    y_start=160,
+    x_stop=180,
+    y_stop=180,
+    x_stp_num=10,
+    abs_x_posis=compute_abs_x_y_from_x_y(160, 160, 180, 180, 10, 10)[0],
+    abs_y_posis=compute_abs_x_y_from_x_y(160, 160, 180, 180, 10, 10)[1],
+    abs_z_pos=enderstat.abs_z_pos,
+    n_points=len(compute_abs_x_y_from_x_y(160, 160, 180, 180, 10, 10)[1]),
     actual_point=0,
 )
 
@@ -527,11 +572,11 @@ class MovementXYZ:
 class CreateCircularTrajectory:
     def __init__(self, app) -> None:
         self.traj_label = Label(
-            app, text="Create a circular trajectory around the center point"
+            app, text="Create a circular trajectory around the center point."
         )
         self.traj_label.place(
             x=spacer,
-            y=y_0ff + 4 * btn_height + 1 * spacer,
+            y=y_0ff + 4 * btn_height + spacer,
             width=x_0ff + 4 * btn_width,
             height=btn_height,
         )
@@ -640,6 +685,27 @@ class CreateCircularTrajectory:
             plot(enderstat, circledrivepattern)
 
 
+class CreateKartesianTrajectory:
+    def __init__(self, app) -> None:
+        self.traj_label = Label(app, text="Create a kartesian trajectory.")
+        self.traj_label.place(
+            x=2 * spacer + x_0ff + 5 * btn_width,
+            y=y_0ff + 4 * btn_height + spacer,
+            width=x_0ff + 3 * btn_width,
+            height=btn_height,
+        )
+        self.traj_info_dialog = Button(
+            app, text="Info", command=action_get_info_dialog_kat_traj
+        )
+        self.traj_info_dialog.place(
+            x=2 * spacer + 2*x_0ff + 8 * btn_width,
+            y=y_0ff + 4 * btn_height + 1 * spacer,
+            width=btn_width,
+            height=btn_height,
+        )
+    # WIP
+
+
 def plot(enderstat: Ender5Stat, cdp: CircleDrivePattern = circledrivepattern) -> None:
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(8, 5))
 
@@ -714,7 +780,7 @@ def plot(enderstat: Ender5Stat, cdp: CircleDrivePattern = circledrivepattern) ->
 
     canvas = FigureCanvasTkAgg(fig, master=app)
     canvas.draw()
-    canvas.get_tk_widget().place(x=750, y=0, width=400, height=800)
+    canvas.get_tk_widget().place(x=950, y=0, width=400, height=800)
     plt.close(fig)
 
 
@@ -736,6 +802,13 @@ TBD\n\
 ************************"
     messagebox.showinfo(message=m_text, title="Info")
 
+def action_get_info_dialog_kat_traj():
+    m_text = "\
+************************\n\
+TBD\n\
+************************"
+    messagebox.showinfo(message=m_text, title="Info")
+
 
 grid_dict = {"sticky": "we", "ipadx": "10"}
 
@@ -751,6 +824,7 @@ movement_xyz = MovementXYZ(app)
 tankselect = TankSelect()
 stepwidthselect = StepWidthSelect(app)
 create_circular_trajectory = CreateCircularTrajectory(app)
+create_kartesian_trajectory = CreateKartesianTrajectory(app)
 LOG = Log(app)
 sys.stdout = LOG
 
@@ -768,5 +842,5 @@ dropdown.add_cascade(label="Help", menu=help_menu)
 plot(enderstat)
 
 app.config(menu=dropdown)
-app.geometry("1150x800")
+app.geometry("1350x800")
 app.mainloop()
