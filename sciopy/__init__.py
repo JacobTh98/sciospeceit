@@ -33,7 +33,7 @@ from .doteit import (
 )
 
 from .setup_m import (
-    GeneralSystemMessages,
+    SystemMessageCallback,
     SaveSettings,
     SoftwareReset,
     ResetMeasurementSetup,
