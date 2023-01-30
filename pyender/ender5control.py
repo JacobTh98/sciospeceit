@@ -64,7 +64,7 @@ def connect_COM_port(port: str = "COM4", baudrate: int = 115200, timeout: int = 
 # Commands for Ender 5
 
 
-def move_to_absolute_x(ser, enderstat: Ender5Stat):
+def move_to_absolute_x(ser, enderstat: Ender5Stat) -> None:
     """
     enderstat.abs_x_tgt : absolute x position
     enderstat.motion_speed : movement speed in [mm/min]
@@ -72,7 +72,7 @@ def move_to_absolute_x(ser, enderstat: Ender5Stat):
     command(ser, f"G0 X{enderstat.abs_x_tgt} F{enderstat.motion_speed}\r\n")
 
 
-def move_to_absolute_y(ser, enderstat: Ender5Stat):
+def move_to_absolute_y(ser, enderstat: Ender5Stat) -> None:
     """
     enderstat.abs_x_tgt : absolute x position
     enderstat.motion_speed : movement speed in [mm/min]
@@ -80,7 +80,7 @@ def move_to_absolute_y(ser, enderstat: Ender5Stat):
     command(ser, f"G0 Y{enderstat.abs_y_tgt} F{enderstat.motion_speed}\r\n")
 
 
-def move_to_absolute_z(ser, enderstat: Ender5Stat):
+def move_to_absolute_z(ser, enderstat: Ender5Stat) -> None:
     """
     enderstat.abs_x_tgt : absolute x position
     enderstat.motion_speed : movement speed in [mm/min]
@@ -88,7 +88,7 @@ def move_to_absolute_z(ser, enderstat: Ender5Stat):
     command(ser, f"G0 Z{enderstat.abs_z_tgt} F{enderstat.motion_speed}\r\n")
 
 
-def move_to_absolute_x_y(ser, enderstat: Ender5Stat):
+def move_to_absolute_x_y(ser, enderstat: Ender5Stat) -> None:
     """
     enderstat.abs_x_tgt : absolute x position
     enderstat.abs_y_tgt : absolute y position
@@ -100,28 +100,28 @@ def move_to_absolute_x_y(ser, enderstat: Ender5Stat):
     )
 
 
-def disable_steppers(ser):
+def disable_steppers(ser) -> None:
     command(ser, "M18 X Y Z E\r\n")
 
 
-def enable_steppers(ser):
+def enable_steppers(ser) -> None:
     command(ser, "M17 X Y Z E\r\n")
 
 
-def x_y_home(ser, enderstat: Ender5Stat):
+def x_y_home(ser, enderstat: Ender5Stat) -> None:
     command(ser, f"G28 X0 Y0 F{enderstat.motion_speed}\r\n")
     command(ser, f"G28 Z0 F{enderstat.motion_speed}\r\n")
 
 
-def x_y_center(ser, enderstat: Ender5Stat):
+def x_y_center(ser, enderstat: Ender5Stat) -> None:
     command(ser, f"G0 X180 Y180 F{enderstat.motion_speed}\r\n")
 
 
-def turn_off_fan(ser):
+def turn_off_fan(ser) -> None:
     command(ser, "M106 S0\r\n")
 
 
-def init_axis(ser):
+def init_axis(ser) -> None:
     x_y_home(ser)
     x_y_center(ser)
     turn_off_fan(ser)
@@ -130,7 +130,7 @@ def init_axis(ser):
 
 def circle_clockwise(
     ser, X, Y, enderstat: Ender5Stat, I=180, J=180, clock: bool = True
-):
+) -> None:
     """
     clock : True = clockwise, False = counter-clockwise
     X : The position to move to on the X axis
@@ -145,7 +145,7 @@ def circle_clockwise(
         command(ser, f"G3 X{X} Y{Y} I{I} J{J} F{enderstat.motion_speed}\r\n")
 
 
-def command(ser, command):
+def command(ser, command) -> None:
     ser.write(str.encode(command))
     time.sleep(1)
     while True:
@@ -168,11 +168,34 @@ def compute_abs_x_y_from_r_phi(r, phi_step) -> np.ndarray:
     phi_step : angle step [°]
 
     returns:
-        P_xy : Array with x,y steps
+        x,y : Arrays with corresponding x,y steps
     """
     x0, y0 = 180, 180
     angles = np.radians(np.arange(0, 360, phi_step))
     x = r * np.cos(angles) + x0
     y = r * np.sin(angles) + y0
 
+    return x, y
+
+
+def compute_abs_x_y_from_x_y(
+    x_start, y_start, x_stop, y_stop, x_steps, y_steps
+) -> np.ndarray:
+    """
+    Returns a mesh of evenly distributed measurement points
+    x_start : Start of the grid at x
+    y_start : Start of the grid at y
+    x_stop : Stop of the grid at x
+    y_stop : Stop of the grid at x
+    x_steps : Number of steps on the x-axis including endpoint
+    y_steps : Number of steps on the y-axis including endpoint
+
+    returns:
+        x,y : Arrays with corresponding x,y steps
+
+    """
+    x_sigle_vals = np.linspace(x_start, x_stop, num=x_steps, endpoint=True)
+    y_sigle_vals = np.linspace(y_start, y_stop, num=y_steps, endpoint=True)
+    x = np.repeat(x_sigle_vals, y_steps)
+    y = np.concatenate(np.stack([y_sigle_vals for _ in range(x_steps)], axis=0))
     return x, y
