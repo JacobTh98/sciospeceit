@@ -72,13 +72,3 @@ def print_command_list() -> None:
     print("0xD1 - Get Device Info              GS=[CT] 00 [CT]")
     print("0xCF - TCP connection watchdog      GS=[CT] 05 00 [interval] [CT]")
     print("0xD2 - Get firmware IDs             GS=D2 00 D2")
-
-
-def save_settings() -> None:
-    """TB"""
-    print("Saved Settings: 0x90")
-
-
-def software_reset() -> None:
-    """TB"""
-    print("Software reset: 0xA1")

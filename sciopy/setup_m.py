@@ -4,12 +4,13 @@
 # from connect import connect_COM_port
 from time import sleep
 
-def SystemMessageCallback(serial, prnt_msg:bool = True, ret_hex_int:int=0):
+
+def SystemMessageCallback(serial, prnt_msg: bool = True, ret_hex_int: int = 0):
     """Reads the message buffer of a serial connection. Also prints out the general system message.
     serial      ... serial connection
     prnt_msg    ... print out the buffer
     ret_hex_int ... Parameters -> ['none','hex', 'int', 'both']
-    
+
     """
     msg_dict = {
         "0x01": "No message inside the message buffer",
@@ -26,7 +27,7 @@ def SystemMessageCallback(serial, prnt_msg:bool = True, ret_hex_int:int=0):
     received = []
     received_hex = []
     data_count = 0
-    
+
     while True:
         buffer = serial.read()
         if buffer:
@@ -39,28 +40,26 @@ def SystemMessageCallback(serial, prnt_msg:bool = True, ret_hex_int:int=0):
             # Break if we haven't received any data
             break
 
-        received = ''.join(str(received))  # If you need all the data
+        received = "".join(str(received))  # If you need all the data
     received_hex = [hex(receive) for receive in received]
     try:
-        msg_idx = received_hex.index('0x18')
-        print(msg_dict[received_hex[msg_idx+2]])
+        msg_idx = received_hex.index("0x18")
+        print(msg_dict[received_hex[msg_idx + 2]])
     except BaseException:
-        print(msg_dict['0x01'])
+        print(msg_dict["0x01"])
         prnt_msg = False
     if prnt_msg:
-        print("message buffer:\n",received_hex)
-        print("message length:\t",data_count)
-    
-    
-    if ret_hex_int=='none':
-        return
-    elif ret_hex_int=='hex':
-        return received_hex
-    elif ret_hex_int=='int':
-        return received
-    elif ret_hex_int=='both':
-        return received, received_hex
+        print("message buffer:\n", received_hex)
+        print("message length:\t", data_count)
 
+    if ret_hex_int == "none":
+        return
+    elif ret_hex_int == "hex":
+        return received_hex
+    elif ret_hex_int == "int":
+        return received
+    elif ret_hex_int == "both":
+        return received, received_hex
 
 
 def SaveSettings(serial) -> None:
@@ -73,16 +72,14 @@ def SoftwareReset(serial) -> None:
     SystemMessageCallback(serial)
 
 
-
 def ResetMeasurementSetup(serial):
     serial.write(bytearray([0xB0, 0x01, 0x01, 0xB0]))
     SystemMessageCallback(serial)
-    
 
 
 def SetMeasurementSetup(
     serial,
-    burst_count: int,
+    burst_count: int = 10,
     frame_rate: int = 1,
     exc_freq: list = [100, 100, 1, 0],
     exc_amp: float = 0.01,
@@ -127,7 +124,6 @@ def SetMeasurementSetup(
     def write_part(serial, msg) -> None:
         serial.write(msg)
         SystemMessageCallback(serial)
-        
 
     if burst_count <= 255:
         burst_count = bytearray([0xB0, 0x03, 0x02, 0x00, burst_count, 0xB0])
@@ -162,13 +158,11 @@ def GetMeasurementSetup(serial) -> None:
     serial.write(burst_count)
     print("Burst Count:")
     SystemMessageCallback(serial)  # [CT] 03 02 [burst count] [CT]
-    
 
     frame_rate = bytearray([0xB1, 0x01, 0x03, 0xB1])
     serial.write(frame_rate)
     print("Frame Rate:")
     SystemMessageCallback(serial)  # [CT] 05 03 [frame rate] [CT]
-    
 
     exc_freq = bytearray([0xB1, 0x01, 0x04, 0xB1])
     serial.write(exc_freq)
@@ -176,7 +170,6 @@ def GetMeasurementSetup(serial) -> None:
     SystemMessageCallback(
         serial
     )  # [CT] [LE] 04 [fmin 1st block] [fmax 1st block] [fcount 1st block] [ftype 1st block] [fmin 2nd block] [fmax 2nd block] [fcount 2nd block] [ftype 2nd block] ... [CT]
-    
 
     exc_amp = bytearray(
         [0xB1, 0x01, 0x05, 0xB1]
@@ -184,31 +177,26 @@ def GetMeasurementSetup(serial) -> None:
     serial.write(exc_amp)
     print("Excitation Amplitude:")
     SystemMessageCallback(serial)
-    
 
     exc_seq = bytearray([0xB1, 0x01, 0x06, 0xB1])
     serial.write(exc_seq)
     print("Excitation Sequence:")
     SystemMessageCallback(serial)  # [CT] [LE] 06 [excitation sequence] [CT]
-    
 
     meas_mode = bytearray([0xB1, 0x01, 0x08, 0xB1])
     serial.write(meas_mode)
     print("Measure Mode:")
     SystemMessageCallback(serial)  # [CT] 03 08 [Mode] [Boundary] [CT]
-    
 
     gain = bytearray([0xB1, 0x01, 0x09, 0xB1])
     serial.write(gain)
     print("Gain Settings:")
     SystemMessageCallback(serial)  # [CT] [LE] 09 [Mode] [Data] [CT]
-    
 
     exc_switch = bytearray([0xB1, 0x01, 0x0C, 0xB1])
     serial.write(exc_switch)
     print("Excitation switch type:")
     SystemMessageCallback(serial)  # [CT] 02 0C [Type] [CT]
-    
 
 
 def SetOutputConfiguration(
@@ -242,15 +230,14 @@ def SetOutputConfiguration(
     # write excitation setting
     serial.write(bytearray([0xB2, 0x02, 0x01, exc_settings, 0xB2]))
     SystemMessageCallback(serial)
-    
+
     # write current row in the frequency stack
     serial.write(bytearray([0xB2, 0x02, 0x02, curr_row_freq_stack, 0xB2]))
     SystemMessageCallback(serial)
-    
+
     # write timestamp
     serial.write(bytearray([0xB2, 0x02, 0x03, timestamp, 0xB2]))
     SystemMessageCallback(serial)
-    
 
 
 def GetOutputConfiguration(serial) -> None:
@@ -258,7 +245,7 @@ def GetOutputConfiguration(serial) -> None:
     pass
 
 
-def Start_StopMeasurement(serial, command: int) -> None:
+def StartStopMeasurement(serial, command: int) -> None:
     """
     A new measurement can only be started when no other measurement is ongoing. A description is can be found in
     section "Measured Data".
@@ -270,11 +257,10 @@ def Start_StopMeasurement(serial, command: int) -> None:
     else:
         serial.write(bytearray([0xB4, 0x01, 0x00, 0xB4]))
     SystemMessageCallback(serial)
-    
 
 
 def GetTemperature() -> None:
-    print("Not temperature sensor available")
+    print("No temperature sensor available")
 
 
 def SetBatteryControll():
@@ -304,7 +290,6 @@ def SetLEDControl(serial, led: int, mode: str) -> None:
     byte_arr = bytearray([0xC8, 0x03, 0x01, led, MODE, 0xC8])
     serial.write(byte_arr)
     SystemMessageCallback(serial)
-    
 
 
 def GetLEDControl(serial, led: int, mode: str) -> None:
@@ -329,7 +314,6 @@ def GetLEDControl(serial, led: int, mode: str) -> None:
     print("sent:", byte_arr)
     serial.write(byte_arr)
     SystemMessageCallback(serial)
-    
 
 
 def SetLED_Mode(serial, led: int, mode: str) -> None:
@@ -353,7 +337,6 @@ def SetLED_Mode(serial, led: int, mode: str) -> None:
         MODE = 0x02
     serial.write(bytearray([0xC8, 0x03, 0x02, led, MODE, 0xC8]))
     SystemMessageCallback(serial)
-    
 
 
 def DisableLED_AutoMode(serial) -> None:
@@ -388,17 +371,12 @@ def FrontIOs():
 def PowerPlugDetect(serial) -> None:
     serial.write(bytearray([0xCC, 0x01, 0x81, 0xCC]))
     SystemMessageCallback(serial)
-    if callback[1] == 1:
-        print("power plug is inserted")
-    else:
-        print(("power plug is not inserted"))
 
 
 def GetDevideInfo(serial) -> None:
     """Get device info"""
     serial.write(bytearray([0xD1, 0x00, 0xD1]))
     SystemMessageCallback(serial)
-    
 
 
 def TCP_ConnectionWatchdog():
@@ -410,7 +388,6 @@ def GetFirmwareIDs(serial) -> None:
     """Get firmware IDs"""
     serial.write(bytearray([0xD2, 0x00, 0xD2]))
     SystemMessageCallback(serial)
-    
 
 
 def Config_01(serial) -> None:
