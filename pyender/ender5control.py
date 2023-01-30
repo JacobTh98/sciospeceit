@@ -1,34 +1,17 @@
 try:
     import serial
-    from serial import Serial
 except ImportError:
     print("Could not import module: serial")
 
 
 import time
-from datetime import datetime
 import numpy as np
 import sys
 import glob
 
+from ender_sciospec_classes import Ender5Stat
+
 # https://reprap.org/wiki/G-code#M17:_Enable.2FPower_all_stepper_motors
-
-from dataclasses import dataclass
-from typing import Union
-
-
-@dataclass
-class Ender5Stat:
-    """Class for keeping everything together"""
-
-    abs_x_pos: Union[int, float]
-    abs_y_pos: Union[int, float]
-    abs_z_pos: Union[int, float]
-    tank_architecture: Union[None, str]
-    motion_speed: Union[int, float]
-    abs_x_tgt: Union[None, int, float]
-    abs_y_tgt: Union[None, int, float]
-    abs_z_tgt: Union[None, int, float]
 
 
 def available_serial_ports() -> list:
@@ -78,7 +61,7 @@ def connect_COM_port(port: str = "COM4", baudrate: int = 115200, timeout: int = 
     return ser
 
 
-## Commands for Ender 5
+# Commands for Ender 5
 
 
 def move_to_absolute_x(ser, enderstat: Ender5Stat):
@@ -145,7 +128,9 @@ def init_axis(ser):
     print("X,Y axis are centered at X(180), Y(180)")
 
 
-def circle_clockwise(X, Y, enderstat: Ender5Stat, I=180, J=180, clock: bool = True):
+def circle_clockwise(
+    ser, X, Y, enderstat: Ender5Stat, I=180, J=180, clock: bool = True
+):
     """
     clock : True = clockwise, False = counter-clockwise
     X : The position to move to on the X axis

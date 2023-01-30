@@ -1,27 +1,25 @@
-import os
 import numpy as np
 import time
-from dataclasses import dataclass
-from typing import Union, List
 import sys
-from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-plt.rcParams["font.size"] = 9
-plt.rcParams["figure.autolayout"] = True
+from ender_sciospec_classes import Ender5Stat, mmPerStep, CircleDrivePattern
 
-"""Ender Imports"""
-
-try:
-    import serial
-    from serial import Serial
-except ImportError:
-    print("Could not import module: serial")
-from datetime import datetime
-import sys
+from tkinter import (
+    END,
+    ttk,
+    Button,
+    Label,
+    Entry,
+    Menu,
+    Scale,
+    Text,
+    Tk,
+    messagebox,
+)
 
 from ender5control import (
     x_y_home,
@@ -35,27 +33,14 @@ from ender5control import (
     compute_abs_x_y_from_r_phi,
 )
 
-# import serial.tools.list_ports
-from tkinter import (
-    RIGHT,
-    LEFT,
-    HORIZONTAL,
-    END,
-    ttk,
-    Button,
-    Label,
-    Entry,
-    Menu,
-    Scale,
-    Text,
-    filedialog,
-    Toplevel,
-    IntVar,
-    Checkbutton,
-    Tk,
-    messagebox,
-)
+try:
+    import serial
+except ImportError:
+    print("Could not import module: serial")
 
+plt.rcParams["font.size"] = 9
+# if youre monitor resolution is 4k set "plt.rcParams["font.size"]=6"
+plt.rcParams["figure.autolayout"] = True
 label_settings = {"font": ("Arial", 25), "borderwidth": "10", "background": "lightblue"}
 
 
@@ -97,29 +82,7 @@ center_x_y = 180
 center_z = 0
 
 
-@dataclass
-class mmPerStep:
-    mm_per_step: Union[float, int]
-
-
 manual_step = mmPerStep(10)
-
-
-@dataclass
-class Ender5Stat:
-    """Class for keeping everything together"""
-
-    abs_x_pos: Union[int, float]
-    abs_y_pos: Union[int, float]
-    abs_z_pos: Union[int, float]
-    tank_architecture: Union[None, str]
-    motion_speed: Union[int, float]
-    abs_x_tgt: Union[None, int, float]
-    abs_y_tgt: Union[None, int, float]
-    abs_z_tgt: Union[None, int, float]
-
-    # Probably add a limitbox for a corresponding tank
-    # TBD: Write a function that checks the boundary limit box
 
 
 # First Initialization
@@ -135,20 +98,6 @@ enderstat = Ender5Stat(
 )
 
 
-@dataclass
-class CircleDrivePattern:
-    active: bool
-    wait_at_pos: int  # [s]
-    radius: Union[int, float]  # [mm]
-    phi_steps: Union[int, float]  # [degree/step]
-    abs_x_posis: List[Union[int, float]]
-    abs_y_posis: List[Union[int, float]]
-    abs_z_posis: List[Union[int, float]]
-    motion_speed: List[Union[int, float]]
-    n_points: int
-    actual_point: int
-
-
 circledrivepattern = CircleDrivePattern(
     active=False,
     wait_at_pos=1,  # time to wait in [s]
@@ -161,11 +110,6 @@ circledrivepattern = CircleDrivePattern(
     n_points=len(compute_abs_x_y_from_r_phi(100, 10)[0]),
     actual_point=0,
 )
-
-
-@dataclass
-class MultipleCircleDrivePattern:
-    pass
 
 
 class ConnectEnder5:
@@ -235,7 +179,7 @@ class ConnectEnder5:
             enderstat.abs_y_tgt = None
             print("Initialization done.")
 
-        except:
+        except BaseException:
             print("Can not open", self.com_dropdown_ender.get())
 
 
@@ -703,7 +647,7 @@ def plot(enderstat: Ender5Stat, cdp: CircleDrivePattern = circledrivepattern) ->
     ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".")
     if enderstat.abs_x_tgt is not None or enderstat.abs_y_tgt is not None:
         ax1.scatter(enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*")
-    if cdp.active == True:
+    if cdp.active is True:
         ax1.scatter(cdp.abs_x_posis, cdp.abs_y_posis, marker="*")
     ax1.set_ylabel("absolute y[mm]")
     ax1.set_xlabel("absolute x[mm]")
