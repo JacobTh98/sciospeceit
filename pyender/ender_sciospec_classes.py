@@ -50,7 +50,7 @@ class MultipleCircleDrivePattern:
 
 
 @dataclass
-class KartesianGridDrivePattern:
+class KartesianDrivePattern:
     active: bool
     wait_at_pos: int  # [s]
     motion_speed: Union[int, float]
@@ -59,7 +59,7 @@ class KartesianGridDrivePattern:
     x_stop: Union[int, float]
     y_stop: Union[int, float]
     x_stp_num: int
-    x_stp_num: int
+    y_stp_num: int
     abs_x_posis: List[Union[int, float]]
     abs_y_posis: List[Union[int, float]]
     abs_z_pos: Union[int, float]
