@@ -9,7 +9,7 @@ import numpy as np
 import sys
 import glob
 
-from ender_sciospec_classes import Ender5Stat
+from ender_sciospec_classes import Ender5Stat, HitBoxTank
 
 # https://reprap.org/wiki/G-code#M17:_Enable.2FPower_all_stepper_motors
 
@@ -179,7 +179,7 @@ def compute_abs_x_y_from_r_phi(r, phi_step) -> np.ndarray:
 
 
 def compute_abs_x_y_from_x_y(
-    x_start, y_start, x_stop, y_stop, x_steps, y_steps
+    x_start, y_start, x_stop, y_stop, x_steps, y_steps, hbt: HitBoxTank
 ) -> np.ndarray:
     """
     Returns a mesh of evenly distributed measurement points
@@ -189,6 +189,7 @@ def compute_abs_x_y_from_x_y(
     y_stop : Stop of the grid at x
     x_steps : Number of steps on the x-axis including endpoint
     y_steps : Number of steps on the y-axis including endpoint
+    hbt : Hitbox of the placed tank
 
     returns:
         x,y : Arrays with corresponding x,y steps
@@ -198,4 +199,21 @@ def compute_abs_x_y_from_x_y(
     y_sigle_vals = np.linspace(y_start, y_stop, num=y_steps, endpoint=True)
     x = np.repeat(x_sigle_vals, y_steps)
     y = np.concatenate(np.stack([y_sigle_vals for _ in range(x_steps)], axis=0))
-    return x, y
+
+    X = []
+    Y = []
+    if hbt.tank_architecture is not None:
+        for xs, ys in zip(
+            x - 175, y - 175
+        ):  # TBD: Add MeasurementObject class for hitbox of the object itself.
+            r = np.sqrt(xs**2 + ys**2)
+            if r <= hbt.r_max:
+                X.append(xs)
+                Y.append(ys)
+            else:
+                pass
+        x = np.array(X) + 175
+        y = np.array(Y) + 175
+        return x, y
+    else:
+        return x, y

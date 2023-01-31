@@ -22,6 +22,7 @@ from ender_sciospec_classes import (
     mmPerStep,
     CircleDrivePattern,
     KartesianDrivePattern,
+    HitBoxTank,
 )
 
 from tkinter import (
@@ -141,20 +142,34 @@ circledrivepattern = CircleDrivePattern(
     actual_point=0,
 )
 
+hit_box_tank = HitBoxTank(
+    tank_architecture=None,
+    z_lim_height=0,
+    r_max=75,
+)
+
 kartesiandrivepattern = KartesianDrivePattern(
     active=False,
     wait_at_pos=1,
     motion_speed=enderstat.motion_speed,
     x_start=160,
     y_start=160,
-    x_stop=180,
-    y_stop=180,
+    x_stop=center_x_y,
+    y_stop=center_x_y,
     x_stp_num=10,
     y_stp_num=10,
-    abs_x_posis=compute_abs_x_y_from_x_y(160, 160, 180, 180, 10, 10)[0],
-    abs_y_posis=compute_abs_x_y_from_x_y(160, 160, 180, 180, 10, 10)[1],
+    abs_x_posis=compute_abs_x_y_from_x_y(
+        160, 160, center_x_y, center_x_y, 10, 10, hit_box_tank
+    )[0],
+    abs_y_posis=compute_abs_x_y_from_x_y(
+        160, 160, center_x_y, center_x_y, 10, 10, hit_box_tank
+    )[1],
     abs_z_pos=enderstat.abs_z_pos,
-    n_points=len(compute_abs_x_y_from_x_y(160, 160, 180, 180, 10, 10)[1]),
+    n_points=len(
+        compute_abs_x_y_from_x_y(
+            160, 160, center_x_y, center_x_y, 10, 10, hit_box_tank
+        )[1]
+    ),
     actual_point=0,
 )
 
@@ -293,12 +308,14 @@ class TankSelect:
             tnk = self.tnk_dropdown.get()
             print(tnk, "tank selected.")
             enderstat.tank_architecture = tnk
+            hit_box_tank.tank_architecture = tnk
             print("Sinking z level.")
             if tnk == "medium":
                 enderstat.abs_z_tgt = 200
             if tnk == "high":
                 enderstat.abs_z_tgt = 250
             if tnk == "select tank":
+                hit_box_tank.tank_architecture = None
                 enderstat.abs_z_tgt = enderstat.abs_z_pos
             move_to_absolute_z(COM_Ender, enderstat)
             enderstat.abs_z_pos = enderstat.abs_z_tgt
@@ -763,28 +780,28 @@ class CreateKartesianTrajectory:
             width=btn_width,
             height=btn_height // 2,
         )
-        self.y_start = Entry(app)
-        self.y_start.place(
+        self.x_step = Entry(app)
+        self.x_step.place(
             x=4 * spacer + x_0ff + 9 * btn_width,
             y=y_0ff + 5 * btn_height + 2 * spacer,
             width=btn_width,
             height=btn_height // 2,
         )
-        self.y_start_unit = Label(app, text="x-steps").place(
+        self.x_step_unit = Label(app, text="x-steps").place(
             x=4 * spacer + x_0ff + 10 * btn_width,
             y=y_0ff + 5 * btn_height + 2 * spacer,
             width=btn_width,
             height=btn_height // 2,
         )
 
-        self.y_stop = Entry(app)
-        self.y_stop.place(
+        self.y_step = Entry(app)
+        self.y_step.place(
             x=4 * spacer + x_0ff + 9 * btn_width,
             y=y_0ff + 5 * btn_height + btn_height // 2 + 2 * spacer,
             width=btn_width,
             height=btn_height // 2,
         )
-        self.y_stop_unit = Label(app, text="y-steps").place(
+        self.y_step_unit = Label(app, text="y-steps").place(
             x=4 * spacer + x_0ff + 10 * btn_width,
             y=y_0ff + 5 * btn_height + btn_height // 2 + 2 * spacer,
             width=btn_width,
@@ -807,6 +824,10 @@ class CreateKartesianTrajectory:
 
         kartesiandrivepattern.x_start = int(self.x_start.get())
         kartesiandrivepattern.y_start = int(self.y_start.get())
+        kartesiandrivepattern.x_stop = int(self.x_stop.get())
+        kartesiandrivepattern.y_stop = int(self.y_stop.get())
+        kartesiandrivepattern.x_stp_num = int(self.x_step.get())
+        kartesiandrivepattern.y_stp_num = int(self.y_step.get())
         next_auto_drive.next_step_btn["state"] = "normal"
         next_auto_drive.auto_step_btn["state"] = "normal"
 
@@ -818,6 +839,7 @@ class CreateKartesianTrajectory:
             kartesiandrivepattern.y_stop,
             kartesiandrivepattern.x_stp_num,
             kartesiandrivepattern.y_stp_num,
+            hit_box_tank,
         )
         kartesiandrivepattern.abs_x_posis = x
         kartesiandrivepattern.abs_y_posis = y
@@ -836,10 +858,14 @@ def plot(
     ax1.set_title("Top view")
     if enderstat.tank_architecture is not None:
         if enderstat.tank_architecture == "select tank":
-            circle = Circle((175, 175), radius=1, color="lightsteelblue", alpha=0)
+            circle = Circle(
+                (center_x_y, center_x_y), radius=1, color="lightsteelblue", alpha=0
+            )
             ax1.add_artist(circle)
         else:
-            circle = Circle((175, 175), radius=75, color="lightsteelblue", alpha=0.7)
+            circle = Circle(
+                (center_x_y, center_x_y), radius=75, color="lightsteelblue", alpha=0.7
+            )
             ax1.add_artist(circle)
 
     ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".")
@@ -854,9 +880,9 @@ def plot(
     ax1.set_xlim((0, 350))
     ax1.set_ylim((0, 350))
     ax1.grid()
-    if enderstat.abs_x_pos == 180 and enderstat.abs_y_pos == 180:
-        ax1.vlines(180, 0, 500, linestyles="dotted", color="black", alpha=0.5)
-        ax1.hlines(180, 0, 500, linestyles="dotted", color="black", alpha=0.5)
+    if enderstat.abs_x_pos == center_x_y and enderstat.abs_y_pos == center_x_y:
+        ax1.vlines(center_x_y, 0, 500, linestyles="dotted", color="black", alpha=0.5)
+        ax1.hlines(center_x_y, 0, 500, linestyles="dotted", color="black", alpha=0.5)
 
     ax2.set_title("Front view")
 
@@ -910,7 +936,7 @@ def plot(
     ax2.set_ylim((0, 400))
     ax2.grid()
     ax2.legend()
-    # ax2.hlines(180, 0, 200, linestyles="dotted", color="black")
+    # ax2.hlines(center_x_y, 0, 200, linestyles="dotted", color="black")
 
     canvas = FigureCanvasTkAgg(fig, master=app)
     canvas.draw()
