@@ -68,12 +68,17 @@ class KartesianDrivePattern:
 
 
 @dataclass
-class HitBoxMediumTank:
+class HitBoxTank:
+    tank_architecture: Union[None, str]
     z_lim_height: Union[int, float]
     r_max: Union[int, float]
 
 
 @dataclass
-class HitBoxHighTank:
-    z_lim_height: Union[int, float]
-    r_max: Union[int, float]
+class MeasurementObject:
+    """TBD: Insert in functions"""
+
+    active: bool
+    name: Union[None, str]
+    x_boundary_width: Union[int, float]
+    y_boundary_width: Union[int, float]
