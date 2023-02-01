@@ -46,6 +46,7 @@ def connect_COM_port(port: str = "COM3", baudrate: int = 9600, timeout: int = 1)
     ser = serial.Serial(
         port=port,
         baudrate=baudrate,
+        timeout=timeout,
         parity=serial.PARITY_NONE,
         stopbits=serial.STOPBITS_ONE,
         bytesize=serial.EIGHTBITS,

@@ -1,34 +1,17 @@
 try:
     import serial
-    from serial import Serial
 except ImportError:
     print("Could not import module: serial")
 
 
 import time
-from datetime import datetime
 import numpy as np
 import sys
 import glob
 
+from ender_sciospec_classes import Ender5Stat, HitBoxTank
+
 # https://reprap.org/wiki/G-code#M17:_Enable.2FPower_all_stepper_motors
-
-from dataclasses import dataclass
-from typing import Union
-
-
-@dataclass
-class Ender5Stat:
-    """Class for keeping everything together"""
-
-    abs_x_pos: Union[int, float]
-    abs_y_pos: Union[int, float]
-    abs_z_pos: Union[int, float]
-    tank_architecture: Union[None, str]
-    motion_speed: Union[int, float]
-    abs_x_tgt: Union[None, int, float]
-    abs_y_tgt: Union[None, int, float]
-    abs_z_tgt: Union[None, int, float]
 
 
 def available_serial_ports() -> list:
@@ -78,34 +61,37 @@ def connect_COM_port(port: str = "COM4", baudrate: int = 115200, timeout: int = 
     return ser
 
 
-## Commands for Ender 5
+# Commands for Ender 5
 
 
-def move_to_absolute_x(ser, enderstat: Ender5Stat):
+def move_to_absolute_x(ser, enderstat: Ender5Stat) -> None:
     """
     enderstat.abs_x_tgt : absolute x position
     enderstat.motion_speed : movement speed in [mm/min]
     """
     command(ser, f"G0 X{enderstat.abs_x_tgt} F{enderstat.motion_speed}\r\n")
+    print(enderstat)
 
 
-def move_to_absolute_y(ser, enderstat: Ender5Stat):
+def move_to_absolute_y(ser, enderstat: Ender5Stat) -> None:
     """
     enderstat.abs_x_tgt : absolute x position
     enderstat.motion_speed : movement speed in [mm/min]
     """
     command(ser, f"G0 Y{enderstat.abs_y_tgt} F{enderstat.motion_speed}\r\n")
+    print(enderstat)
 
 
-def move_to_absolute_z(ser, enderstat: Ender5Stat):
+def move_to_absolute_z(ser, enderstat: Ender5Stat) -> None:
     """
     enderstat.abs_x_tgt : absolute x position
     enderstat.motion_speed : movement speed in [mm/min]
     """
     command(ser, f"G0 Z{enderstat.abs_z_tgt} F{enderstat.motion_speed}\r\n")
+    print(enderstat)
 
 
-def move_to_absolute_x_y(ser, enderstat: Ender5Stat):
+def move_to_absolute_x_y(ser, enderstat: Ender5Stat) -> None:
     """
     enderstat.abs_x_tgt : absolute x position
     enderstat.abs_y_tgt : absolute y position
@@ -115,37 +101,42 @@ def move_to_absolute_x_y(ser, enderstat: Ender5Stat):
         ser,
         f"G0 X{enderstat.abs_x_tgt} Y{enderstat.abs_y_tgt} F{enderstat.motion_speed}\r\n",
     )
+    print(enderstat)
 
 
-def disable_steppers(ser):
+def disable_steppers(ser) -> None:
     command(ser, "M18 X Y Z E\r\n")
 
 
-def enable_steppers(ser):
+def enable_steppers(ser) -> None:
     command(ser, "M17 X Y Z E\r\n")
 
 
-def x_y_home(ser, enderstat: Ender5Stat):
+def x_y_home(ser, enderstat: Ender5Stat) -> None:
     command(ser, f"G28 X0 Y0 F{enderstat.motion_speed}\r\n")
     command(ser, f"G28 Z0 F{enderstat.motion_speed}\r\n")
+    print(enderstat)
 
 
-def x_y_center(ser, enderstat: Ender5Stat):
+def x_y_center(ser, enderstat: Ender5Stat) -> None:
     command(ser, f"G0 X180 Y180 F{enderstat.motion_speed}\r\n")
+    print(enderstat)
 
 
-def turn_off_fan(ser):
+def turn_off_fan(ser) -> None:
     command(ser, "M106 S0\r\n")
 
 
-def init_axis(ser):
+def init_axis(ser) -> None:
     x_y_home(ser)
     x_y_center(ser)
     turn_off_fan(ser)
     print("X,Y axis are centered at X(180), Y(180)")
 
 
-def circle_clockwise(X, Y, enderstat: Ender5Stat, I=180, J=180, clock: bool = True):
+def circle_clockwise(
+    ser, X, Y, enderstat: Ender5Stat, I=180, J=180, clock: bool = True
+) -> None:
     """
     clock : True = clockwise, False = counter-clockwise
     X : The position to move to on the X axis
@@ -160,7 +151,7 @@ def circle_clockwise(X, Y, enderstat: Ender5Stat, I=180, J=180, clock: bool = Tr
         command(ser, f"G3 X{X} Y{Y} I{I} J{J} F{enderstat.motion_speed}\r\n")
 
 
-def command(ser, command):
+def command(ser, command) -> None:
     ser.write(str.encode(command))
     time.sleep(1)
     while True:
@@ -183,7 +174,7 @@ def compute_abs_x_y_from_r_phi(r, phi_step) -> np.ndarray:
     phi_step : angle step [°]
 
     returns:
-        P_xy : Array with x,y steps
+        x,y : Arrays with corresponding x,y steps
     """
     x0, y0 = 180, 180
     angles = np.radians(np.arange(0, 360, phi_step))
@@ -191,3 +182,44 @@ def compute_abs_x_y_from_r_phi(r, phi_step) -> np.ndarray:
     y = r * np.sin(angles) + y0
 
     return x, y
+
+
+def compute_abs_x_y_from_x_y(
+    x_start, y_start, x_stop, y_stop, x_steps, y_steps, hbt: HitBoxTank
+) -> np.ndarray:
+    """
+    Returns a mesh of evenly distributed measurement points
+    x_start : Start of the grid at x
+    y_start : Start of the grid at y
+    x_stop : Stop of the grid at x
+    y_stop : Stop of the grid at x
+    x_steps : Number of steps on the x-axis including endpoint
+    y_steps : Number of steps on the y-axis including endpoint
+    hbt : Hitbox of the placed tank
+
+    returns:
+        x,y : Arrays with corresponding x,y steps
+
+    """
+    x_sigle_vals = np.linspace(x_start, x_stop, num=x_steps, endpoint=True)
+    y_sigle_vals = np.linspace(y_start, y_stop, num=y_steps, endpoint=True)
+    x = np.repeat(x_sigle_vals, y_steps)
+    y = np.concatenate(np.stack([y_sigle_vals for _ in range(x_steps)], axis=0))
+
+    X = []
+    Y = []
+    if hbt.tank_architecture is not None:
+        for xs, ys in zip(
+            x - 175, y - 175
+        ):  # TBD: Add MeasurementObject class for hitbox of the object itself.
+            r = np.sqrt(xs**2 + ys**2)
+            if r <= hbt.r_max:
+                X.append(xs)
+                Y.append(ys)
+            else:
+                pass
+        x = np.array(X) + 175
+        y = np.array(Y) + 175
+        return x, y
+    else:
+        return x, y

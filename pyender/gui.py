@@ -1,27 +1,42 @@
-import os
 import numpy as np
 import time
-from dataclasses import dataclass
-from typing import Union, List
 import sys
-from matplotlib.figure import Figure
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Rectangle, Circle
 from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-plt.rcParams["font.size"] = 9
-plt.rcParams["figure.autolayout"] = True
-
-"""Ender Imports"""
 
 try:
     import serial
-    from serial import Serial
 except ImportError:
     print("Could not import module: serial")
-from datetime import datetime
-import sys
+
+
+import platform
+from screeninfo import get_monitors
+
+from ender_sciospec_classes import (
+    OperatingSystem,
+    Ender5Stat,
+    mmPerStep,
+    CircleDrivePattern,
+    KartesianDrivePattern,
+    HitBoxTank,
+)
+
+from tkinter import (
+    END,
+    ttk,
+    Button,
+    Label,
+    Entry,
+    Menu,
+    Scale,
+    Text,
+    Tk,
+    messagebox,
+)
 
 from ender5control import (
     x_y_home,
@@ -33,31 +48,32 @@ from ender5control import (
     move_to_absolute_x_y,
     available_serial_ports,
     compute_abs_x_y_from_r_phi,
+    compute_abs_x_y_from_x_y,
 )
 
-# import serial.tools.list_ports
-from tkinter import (
-    RIGHT,
-    LEFT,
-    HORIZONTAL,
-    END,
-    ttk,
-    Button,
-    Label,
-    Entry,
-    Menu,
-    Scale,
-    Text,
-    filedialog,
-    Toplevel,
-    IntVar,
-    Checkbutton,
-    Tk,
-    messagebox,
+""" Read resolution and set for visualization. """
+
+monitor = get_monitors()
+
+if type(monitor) == list:
+    monitor = monitor[0]
+
+print(monitor)
+
+op_system = OperatingSystem(
+    system=str(platform.system()),
+    resolution_width=int(monitor.width),
+    resolution_height=int(monitor.height),
 )
 
-label_settings = {"font": ("Arial", 25), "borderwidth": "10", "background": "lightblue"}
+print(op_system)
 
+if op_system.resolution_width == 3840 or op_system.resolution_height == 3840:
+    print("4k system. Setting rcParams to font size = 6.")
+    plt.rcParams["font.size"] = 5
+else:
+    plt.rcParams["font.size"] = 9
+plt.rcParams["figure.autolayout"] = True
 
 """ Constant design/layout values"""
 
@@ -97,29 +113,7 @@ center_x_y = 180
 center_z = 0
 
 
-@dataclass
-class mmPerStep:
-    mm_per_step: Union[float, int]
-
-
 manual_step = mmPerStep(10)
-
-
-@dataclass
-class Ender5Stat:
-    """Class for keeping everything together"""
-
-    abs_x_pos: Union[int, float]
-    abs_y_pos: Union[int, float]
-    abs_z_pos: Union[int, float]
-    tank_architecture: Union[None, str]
-    motion_speed: Union[int, float]
-    abs_x_tgt: Union[None, int, float]
-    abs_y_tgt: Union[None, int, float]
-    abs_z_tgt: Union[None, int, float]
-
-    # Probably add a limitbox for a corresponding tank
-    # TBD: Write a function that checks the boundary limit box
 
 
 # First Initialization
@@ -135,20 +129,6 @@ enderstat = Ender5Stat(
 )
 
 
-@dataclass
-class CircleDrivePattern:
-    active: bool
-    wait_at_pos: int  # [s]
-    radius: Union[int, float]  # [mm]
-    phi_steps: Union[int, float]  # [degree/step]
-    abs_x_posis: List[Union[int, float]]
-    abs_y_posis: List[Union[int, float]]
-    abs_z_posis: List[Union[int, float]]
-    motion_speed: List[Union[int, float]]
-    n_points: int
-    actual_point: int
-
-
 circledrivepattern = CircleDrivePattern(
     active=False,
     wait_at_pos=1,  # time to wait in [s]
@@ -162,10 +142,36 @@ circledrivepattern = CircleDrivePattern(
     actual_point=0,
 )
 
+hit_box_tank = HitBoxTank(
+    tank_architecture=None,
+    z_lim_height=200,
+    r_max=85,
+)
 
-@dataclass
-class MultipleCircleDrivePattern:
-    pass
+kartesiandrivepattern = KartesianDrivePattern(
+    active=False,
+    wait_at_pos=1,
+    motion_speed=enderstat.motion_speed,
+    x_start=160,
+    y_start=160,
+    x_stop=center_x_y,
+    y_stop=center_x_y,
+    x_stp_num=10,
+    y_stp_num=10,
+    abs_x_posis=compute_abs_x_y_from_x_y(
+        160, 160, center_x_y, center_x_y, 10, 10, hit_box_tank
+    )[0],
+    abs_y_posis=compute_abs_x_y_from_x_y(
+        160, 160, center_x_y, center_x_y, 10, 10, hit_box_tank
+    )[1],
+    abs_z_pos=enderstat.abs_z_pos,
+    n_points=len(
+        compute_abs_x_y_from_x_y(
+            160, 160, center_x_y, center_x_y, 10, 10, hit_box_tank
+        )[1]
+    ),
+    actual_point=0,
+)
 
 
 class ConnectEnder5:
@@ -214,7 +220,6 @@ class ConnectEnder5:
             self.connect_interact_button["fg"] = "black"
             self.connect_interact_button["state"] = "disabled"
             self.com_dropdown_ender["state"] = "disabled"
-            # print(type(COM_Ender))
             # Init routine
             turn_off_fan(COM_Ender)
             enderstat.abs_x_tgt = 0
@@ -235,7 +240,7 @@ class ConnectEnder5:
             enderstat.abs_y_tgt = None
             print("Initialization done.")
 
-        except:
+        except BaseException:
             print("Can not open", self.com_dropdown_ender.get())
 
 
@@ -303,12 +308,14 @@ class TankSelect:
             tnk = self.tnk_dropdown.get()
             print(tnk, "tank selected.")
             enderstat.tank_architecture = tnk
+            hit_box_tank.tank_architecture = tnk
             print("Sinking z level.")
             if tnk == "medium":
-                enderstat.abs_z_tgt = 200
+                enderstat.abs_z_tgt = 0
             if tnk == "high":
-                enderstat.abs_z_tgt = 250
+                enderstat.abs_z_tgt = 100
             if tnk == "select tank":
+                hit_box_tank.tank_architecture = None
                 enderstat.abs_z_tgt = enderstat.abs_z_pos
             move_to_absolute_z(COM_Ender, enderstat)
             enderstat.abs_z_pos = enderstat.abs_z_tgt
@@ -423,12 +430,12 @@ class MovementXYZ:
             height=btn_height,
         )
 
-        self.x_up_btn = Button(app, text="x+", command=self.move_x_down)
+        self.x_up_btn = Button(app, text="x-", command=self.move_x_down)
         self.x_up_btn.place(
             x=x_0ff, y=y_0ff + spacer + btn_height, width=btn_width, height=btn_height
         )
 
-        self.x_down_btn = Button(app, text="x-", command=self.move_x_up)
+        self.x_down_btn = Button(app, text="x+", command=self.move_x_up)
         self.x_down_btn.place(
             x=x_0ff + 2 * btn_width + 2 * spacer,
             y=y_0ff + spacer + btn_height,
@@ -583,11 +590,11 @@ class MovementXYZ:
 class CreateCircularTrajectory:
     def __init__(self, app) -> None:
         self.traj_label = Label(
-            app, text="Create a circular trajectory around the center point"
+            app, text="Create a circular trajectory around the center point."
         )
         self.traj_label.place(
             x=spacer,
-            y=y_0ff + 4 * btn_height + 1 * spacer,
+            y=y_0ff + 4 * btn_height + spacer,
             width=x_0ff + 4 * btn_width,
             height=btn_height,
         )
@@ -638,6 +645,28 @@ class CreateCircularTrajectory:
             height=btn_height,
         )
 
+    def compute_trajectory(self):
+        """Computes rajectory"""
+        kartesiandrivepattern.active = False
+        circledrivepattern.radius = int(self.radius_entry.get())
+        circledrivepattern.phi_steps = int(self.phi_entry.get())
+        next_auto_drive.next_step_btn["state"] = "normal"
+        next_auto_drive.auto_step_btn["state"] = "normal"
+
+        circledrivepattern.active = True
+        circledrivepattern.wait_at_pos = 1
+        x, y = compute_abs_x_y_from_r_phi(
+            circledrivepattern.radius, circledrivepattern.phi_steps
+        )
+        circledrivepattern.abs_x_posis = x
+        circledrivepattern.abs_y_posis = y
+        circledrivepattern.abs_z_posis = enderstat.abs_z_pos
+        circledrivepattern.motion_speed = enderstat.motion_speed
+        plot(enderstat, circledrivepattern, kartesiandrivepattern)
+
+
+class NextAutoDrive:
+    def __init__(self, app) -> None:
         self.next_step_btn = Button(
             app, text="Next step", command=self.next_trajectory_step, state="disabled"
         )
@@ -658,97 +687,265 @@ class CreateCircularTrajectory:
             height=btn_height,
         )
 
-    def compute_trajectory(self):
-        """Computes rajectory"""
-        circledrivepattern.radius = int(self.radius_entry.get())
-        circledrivepattern.phi_steps = int(self.phi_entry.get())
-        self.next_step_btn["state"] = "normal"
-        self.auto_step_btn["state"] = "normal"
-
-        circledrivepattern.active = True
-        circledrivepattern.wait_at_pos = 1
-        x, y = compute_abs_x_y_from_r_phi(
-            circledrivepattern.radius, circledrivepattern.phi_steps
-        )
-        circledrivepattern.abs_x_posis = x
-        circledrivepattern.abs_y_posis = y
-        circledrivepattern.abs_z_posis = enderstat.abs_z_pos
-        circledrivepattern.motion_speed = enderstat.motion_speed
-        plot(enderstat, circledrivepattern)
-
     def next_trajectory_step(self):
-        print(circledrivepattern.actual_point)
-        enderstat.abs_x_tgt = circledrivepattern.abs_x_posis[0]
-        enderstat.abs_y_tgt = circledrivepattern.abs_y_posis[0]
-        move_to_absolute_x_y(COM_Ender, enderstat)
-        circledrivepattern.abs_x_posis = circledrivepattern.abs_x_posis[1:]
-        circledrivepattern.abs_y_posis = circledrivepattern.abs_y_posis[1:]
-        enderstat.abs_x_pos = enderstat.abs_x_tgt
-        enderstat.abs_y_pos = enderstat.abs_y_tgt
-        plot(enderstat, circledrivepattern)
-        circledrivepattern.actual_point += 1
+        if circledrivepattern.active == True:
+            print(circledrivepattern.actual_point)
+            enderstat.abs_x_tgt = circledrivepattern.abs_x_posis[0]
+            enderstat.abs_y_tgt = circledrivepattern.abs_y_posis[0]
+            move_to_absolute_x_y(COM_Ender, enderstat)
+            circledrivepattern.abs_x_posis = circledrivepattern.abs_x_posis[1:]
+            circledrivepattern.abs_y_posis = circledrivepattern.abs_y_posis[1:]
+            enderstat.abs_x_pos = enderstat.abs_x_tgt
+            enderstat.abs_y_pos = enderstat.abs_y_tgt
+            plot(enderstat, circledrivepattern, kartesiandrivepattern)
+            circledrivepattern.actual_point += 1
+        if kartesiandrivepattern.active == True:
+            print(kartesiandrivepattern.actual_point)
+            enderstat.abs_x_tgt = kartesiandrivepattern.abs_x_posis[0]
+            enderstat.abs_y_tgt = kartesiandrivepattern.abs_y_posis[0]
+            move_to_absolute_x_y(COM_Ender, enderstat)
+            kartesiandrivepattern.abs_x_posis = kartesiandrivepattern.abs_x_posis[1:]
+            kartesiandrivepattern.abs_y_posis = kartesiandrivepattern.abs_y_posis[1:]
+            enderstat.abs_x_pos = enderstat.abs_x_tgt
+            enderstat.abs_y_pos = enderstat.abs_y_tgt
+            plot(enderstat, circledrivepattern, kartesiandrivepattern)
+            kartesiandrivepattern.actual_point += 1
 
     def auto_trajectory_drive(self):
-        while len(circledrivepattern.abs_x_posis) != 0:
-            time.sleep(circledrivepattern.wait_at_pos)
-            self.next_trajectory_step()
-            time.sleep(circledrivepattern.wait_at_pos)
-            plot(enderstat, circledrivepattern)
+        if circledrivepattern.active == True:
+            while len(circledrivepattern.abs_x_posis) != 0:
+                time.sleep(circledrivepattern.wait_at_pos)
+                self.next_trajectory_step()
+                time.sleep(circledrivepattern.wait_at_pos)
+                plot(enderstat, circledrivepattern, kartesiandrivepattern)
+        if kartesiandrivepattern.active == True:
+            while len(kartesiandrivepattern.abs_x_posis) != 0:
+                time.sleep(kartesiandrivepattern.wait_at_pos)
+                self.next_trajectory_step()
+                time.sleep(kartesiandrivepattern.wait_at_pos)
+                plot(enderstat, circledrivepattern, kartesiandrivepattern)
 
 
-def plot(enderstat: Ender5Stat, cdp: CircleDrivePattern = circledrivepattern) -> None:
+class CreateKartesianTrajectory:
+    def __init__(self, app) -> None:
+        self.traj_label = Label(app, text="Create a kartesian trajectory.")
+        self.traj_label.place(
+            x=2 * spacer + x_0ff + 5 * btn_width,
+            y=y_0ff + 4 * btn_height + spacer,
+            width=x_0ff + 3 * btn_width + spacer,
+            height=btn_height,
+        )
+        self.traj_info_dialog = Button(
+            app, text="Info", command=action_get_info_dialog_kat_traj
+        )
+        self.traj_info_dialog.place(
+            x=5 * spacer + x_0ff + 11 * btn_width,
+            y=y_0ff + 4 * btn_height + 1 * spacer,
+            width=btn_width,
+            height=btn_height,
+        )
+
+        self.x_start = Entry(app)
+        self.x_start.place(
+            x=2 * spacer + x_0ff + 5 * btn_width,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width,
+            height=btn_height // 2,
+        )
+        self.x_start_unit = Label(app, text="x-start").place(
+            x=2 * spacer + x_0ff + 6 * btn_width,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width,
+            height=btn_height // 2,
+        )
+
+        self.x_stop = Entry(app)
+        self.x_stop.place(
+            x=2 * spacer + x_0ff + 5 * btn_width,
+            y=y_0ff + 5 * btn_height + btn_height // 2 + 2 * spacer,
+            width=btn_width,
+            height=btn_height // 2,
+        )
+        self.x_stop_unit = Label(app, text="x-stop").place(
+            x=2 * spacer + x_0ff + 6 * btn_width,
+            y=y_0ff + 5 * btn_height + btn_height // 2 + 2 * spacer,
+            width=btn_width,
+            height=btn_height // 2,
+        )
+        self.y_start = Entry(app)
+        self.y_start.place(
+            x=3 * spacer + x_0ff + 7 * btn_width,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width,
+            height=btn_height // 2,
+        )
+        self.y_start_unit = Label(app, text="y-start").place(
+            x=3 * spacer + x_0ff + 8 * btn_width,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width,
+            height=btn_height // 2,
+        )
+
+        self.y_stop = Entry(app)
+        self.y_stop.place(
+            x=3 * spacer + x_0ff + 7 * btn_width,
+            y=y_0ff + 5 * btn_height + btn_height // 2 + 2 * spacer,
+            width=btn_width,
+            height=btn_height // 2,
+        )
+        self.y_stop_unit = Label(app, text="y-stop").place(
+            x=3 * spacer + x_0ff + 8 * btn_width,
+            y=y_0ff + 5 * btn_height + btn_height // 2 + 2 * spacer,
+            width=btn_width,
+            height=btn_height // 2,
+        )
+        self.x_step = Entry(app)
+        self.x_step.place(
+            x=4 * spacer + x_0ff + 9 * btn_width,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width,
+            height=btn_height // 2,
+        )
+        self.x_step_unit = Label(app, text="x-steps").place(
+            x=4 * spacer + x_0ff + 10 * btn_width,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width,
+            height=btn_height // 2,
+        )
+
+        self.y_step = Entry(app)
+        self.y_step.place(
+            x=4 * spacer + x_0ff + 9 * btn_width,
+            y=y_0ff + 5 * btn_height + btn_height // 2 + 2 * spacer,
+            width=btn_width,
+            height=btn_height // 2,
+        )
+        self.y_step_unit = Label(app, text="y-steps").place(
+            x=4 * spacer + x_0ff + 10 * btn_width,
+            y=y_0ff + 5 * btn_height + btn_height // 2 + 2 * spacer,
+            width=btn_width,
+            height=btn_height // 2,
+        )
+        self.compute_trajectory_btn = Button(
+            app, text="Set", command=self.compute_trajectory
+        )
+        self.compute_trajectory_btn.place(
+            x=5 * spacer + x_0ff + 11 * btn_width,
+            y=y_0ff + 5 * btn_height + 2 * spacer,
+            width=btn_width,
+            height=btn_height,
+        )
+
+    def compute_trajectory(self):
+        """Computes rajectory"""
+        circledrivepattern.active = False
+        kartesiandrivepattern.active = True
+
+        kartesiandrivepattern.x_start = int(self.x_start.get())
+        kartesiandrivepattern.y_start = int(self.y_start.get())
+        kartesiandrivepattern.x_stop = int(self.x_stop.get())
+        kartesiandrivepattern.y_stop = int(self.y_stop.get())
+        kartesiandrivepattern.x_stp_num = int(self.x_step.get())
+        kartesiandrivepattern.y_stp_num = int(self.y_step.get())
+        next_auto_drive.next_step_btn["state"] = "normal"
+        next_auto_drive.auto_step_btn["state"] = "normal"
+
+        circledrivepattern.wait_at_pos = 1
+        x, y = compute_abs_x_y_from_x_y(
+            kartesiandrivepattern.x_start,
+            kartesiandrivepattern.y_start,
+            kartesiandrivepattern.x_stop,
+            kartesiandrivepattern.y_stop,
+            kartesiandrivepattern.x_stp_num,
+            kartesiandrivepattern.y_stp_num,
+            hit_box_tank,
+        )
+        kartesiandrivepattern.abs_x_posis = x
+        kartesiandrivepattern.abs_y_posis = y
+        kartesiandrivepattern.abs_z_pos = enderstat.abs_z_pos
+        kartesiandrivepattern.motion_speed = enderstat.motion_speed
+        plot(enderstat, circledrivepattern, kartesiandrivepattern)
+
+
+def plot(
+    enderstat: Ender5Stat,
+    cdp: CircleDrivePattern = circledrivepattern,
+    kdp: KartesianDrivePattern = kartesiandrivepattern,
+) -> None:
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(8, 5))
 
     ax1.set_title("Top view")
+    if enderstat.tank_architecture is not None:
+        if enderstat.tank_architecture == "select tank":
+            circle = Circle(
+                (center_x_y, center_x_y), radius=1, color="lightsteelblue", alpha=0
+            )
+            ax1.add_artist(circle)
+        else:
+            circle = Circle(
+                (center_x_y, center_x_y), radius=75, color="lightsteelblue", alpha=0.7
+            )
+            ax1.add_artist(circle)
+
     ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".")
     if enderstat.abs_x_tgt is not None or enderstat.abs_y_tgt is not None:
         ax1.scatter(enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*")
-    if cdp.active == True:
+    if cdp.active is True:
         ax1.scatter(cdp.abs_x_posis, cdp.abs_y_posis, marker="*")
+    if kdp.active is True:
+        ax1.scatter(kdp.abs_x_posis, kdp.abs_y_posis)
     ax1.set_ylabel("absolute y[mm]")
     ax1.set_xlabel("absolute x[mm]")
     ax1.set_xlim((0, 350))
     ax1.set_ylim((0, 350))
     ax1.grid()
-    if enderstat.abs_x_pos == 180 and enderstat.abs_y_pos == 180:
-        ax1.vlines(180, 0, 500, linestyles="dotted", color="black", alpha=0.5)
-        ax1.hlines(180, 0, 500, linestyles="dotted", color="black", alpha=0.5)
+    if enderstat.abs_x_pos == center_x_y and enderstat.abs_y_pos == center_x_y:
+        ax1.vlines(center_x_y, 0, 500, linestyles="dotted", color="black", alpha=0.5)
+        ax1.hlines(center_x_y, 0, 500, linestyles="dotted", color="black", alpha=0.5)
 
     ax2.set_title("Front view")
 
     if enderstat.tank_architecture is not None:
         if enderstat.tank_architecture == "medium":
             tank_archtctrs = [
-                Rectangle((100, 400 - enderstat.abs_z_pos), width=150, height=100)
+                Rectangle(
+                    (100, hit_box_tank.z_lim_height - enderstat.abs_z_pos),
+                    width=150,
+                    height=100,
+                )
             ]
             pc = PatchCollection(
-                tank_archtctrs, facecolor="lightsteelblue", alpha=0.8, edgecolor="black"
+                tank_archtctrs, facecolor="lightsteelblue", alpha=0.7, edgecolor="black"
             )
             ax2.add_collection(pc)
         if enderstat.tank_architecture == "high":
             tank_archtctrs = [
-                Rectangle((100, 400 - enderstat.abs_z_pos), width=150, height=150)
+                Rectangle(
+                    (100, hit_box_tank.z_lim_height - enderstat.abs_z_pos),
+                    width=150,
+                    height=200,
+                )
             ]
             pc = PatchCollection(
-                tank_archtctrs, facecolor="lightsteelblue", alpha=0.8, edgecolor="black"
+                tank_archtctrs, facecolor="lightsteelblue", alpha=0.7, edgecolor="black"
             )
             ax2.add_collection(pc)
         if enderstat.tank_architecture == "select tank":
             tank_archtctrs = [Rectangle((0, 0), width=0, height=0)]  # delete tank
             pc = PatchCollection(
-                tank_archtctrs, facecolor="lightsteelblue", alpha=0.8, edgecolor="black"
+                tank_archtctrs, facecolor="lightsteelblue", alpha=0.7, edgecolor="black"
             )
             ax2.add_collection(pc)
 
     ax2.hlines(
-        400 - enderstat.abs_z_pos,
+        hit_box_tank.z_lim_height - enderstat.abs_z_pos,
         50,
         300,
         linestyles="solid",
         color="black",
         label="z-table",
     )
-    ax2.scatter(enderstat.abs_x_pos, 0, marker=".", label="Currently")
+    ax2.scatter(enderstat.abs_x_pos, 50, marker=".", label="Currently")
     if enderstat.abs_z_tgt is not None:
         ax2.hlines(
             enderstat.abs_z_tgt,
@@ -766,11 +963,11 @@ def plot(enderstat: Ender5Stat, cdp: CircleDrivePattern = circledrivepattern) ->
     ax2.set_ylim((0, 400))
     ax2.grid()
     ax2.legend()
-    # ax2.hlines(180, 0, 200, linestyles="dotted", color="black")
+    # ax2.hlines(center_x_y, 0, hit_box_tank.z_lim_height, linestyles="dotted", color="black")
 
     canvas = FigureCanvasTkAgg(fig, master=app)
     canvas.draw()
-    canvas.get_tk_widget().place(x=750, y=0, width=400, height=800)
+    canvas.get_tk_widget().place(x=950, y=0, width=400, height=800)
     plt.close(fig)
 
 
@@ -793,6 +990,14 @@ TBD\n\
     messagebox.showinfo(message=m_text, title="Info")
 
 
+def action_get_info_dialog_kat_traj():
+    m_text = "\
+************************\n\
+TBD\n\
+************************"
+    messagebox.showinfo(message=m_text, title="Info")
+
+
 grid_dict = {"sticky": "we", "ipadx": "10"}
 
 """Main Init"""
@@ -807,6 +1012,8 @@ movement_xyz = MovementXYZ(app)
 tankselect = TankSelect()
 stepwidthselect = StepWidthSelect(app)
 create_circular_trajectory = CreateCircularTrajectory(app)
+create_kartesian_trajectory = CreateKartesianTrajectory(app)
+next_auto_drive = NextAutoDrive(app)
 LOG = Log(app)
 sys.stdout = LOG
 
@@ -824,5 +1031,5 @@ dropdown.add_cascade(label="Help", menu=help_menu)
 plot(enderstat)
 
 app.config(menu=dropdown)
-app.geometry("1150x800")
+app.geometry("1350x800")
 app.mainloop()
