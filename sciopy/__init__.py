@@ -1,4 +1,4 @@
-from .command_info import (
+from .print_command_info import (
     print_syntax,
     print_general_system_messages,
     print_acknowledge_messages,
@@ -49,7 +49,7 @@ from .setup_m import (
 
 
 __all__ = [
-    # command_info
+    # print_command_info
     "print_syntax",
     "print_general_system_messages",
     "print_acknowledge_messages",
