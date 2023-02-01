@@ -1,5 +1,6 @@
 try:
     import serial
+    from serial import Serial
 except ImportError:
     print("Could not import module: serial")
 
