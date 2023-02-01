@@ -144,7 +144,7 @@ circledrivepattern = CircleDrivePattern(
 
 hit_box_tank = HitBoxTank(
     tank_architecture=None,
-    z_lim_height=0,
+    z_lim_height=200,
     r_max=85,
 )
 
@@ -311,9 +311,9 @@ class TankSelect:
             hit_box_tank.tank_architecture = tnk
             print("Sinking z level.")
             if tnk == "medium":
-                enderstat.abs_z_tgt = 200
+                enderstat.abs_z_tgt = 0
             if tnk == "high":
-                enderstat.abs_z_tgt = 250
+                enderstat.abs_z_tgt = 100
             if tnk == "select tank":
                 hit_box_tank.tank_architecture = None
                 enderstat.abs_z_tgt = enderstat.abs_z_pos
@@ -430,12 +430,12 @@ class MovementXYZ:
             height=btn_height,
         )
 
-        self.x_up_btn = Button(app, text="x+", command=self.move_x_down)
+        self.x_up_btn = Button(app, text="x-", command=self.move_x_down)
         self.x_up_btn.place(
             x=x_0ff, y=y_0ff + spacer + btn_height, width=btn_width, height=btn_height
         )
 
-        self.x_down_btn = Button(app, text="x-", command=self.move_x_up)
+        self.x_down_btn = Button(app, text="x+", command=self.move_x_up)
         self.x_down_btn.place(
             x=x_0ff + 2 * btn_width + 2 * spacer,
             y=y_0ff + spacer + btn_height,
@@ -688,23 +688,42 @@ class NextAutoDrive:
         )
 
     def next_trajectory_step(self):
-        print(circledrivepattern.actual_point)
-        enderstat.abs_x_tgt = circledrivepattern.abs_x_posis[0]
-        enderstat.abs_y_tgt = circledrivepattern.abs_y_posis[0]
-        move_to_absolute_x_y(COM_Ender, enderstat)
-        circledrivepattern.abs_x_posis = circledrivepattern.abs_x_posis[1:]
-        circledrivepattern.abs_y_posis = circledrivepattern.abs_y_posis[1:]
-        enderstat.abs_x_pos = enderstat.abs_x_tgt
-        enderstat.abs_y_pos = enderstat.abs_y_tgt
-        plot(enderstat, circledrivepattern, kartesiandrivepattern)
-        circledrivepattern.actual_point += 1
+        if circledrivepattern.active == True:
+            print(circledrivepattern.actual_point)
+            enderstat.abs_x_tgt = circledrivepattern.abs_x_posis[0]
+            enderstat.abs_y_tgt = circledrivepattern.abs_y_posis[0]
+            move_to_absolute_x_y(COM_Ender, enderstat)
+            circledrivepattern.abs_x_posis = circledrivepattern.abs_x_posis[1:]
+            circledrivepattern.abs_y_posis = circledrivepattern.abs_y_posis[1:]
+            enderstat.abs_x_pos = enderstat.abs_x_tgt
+            enderstat.abs_y_pos = enderstat.abs_y_tgt
+            plot(enderstat, circledrivepattern, kartesiandrivepattern)
+            circledrivepattern.actual_point += 1
+        if kartesiandrivepattern.active == True:
+            print(kartesiandrivepattern.actual_point)
+            enderstat.abs_x_tgt = kartesiandrivepattern.abs_x_posis[0]
+            enderstat.abs_y_tgt = kartesiandrivepattern.abs_y_posis[0]
+            move_to_absolute_x_y(COM_Ender, enderstat)
+            kartesiandrivepattern.abs_x_posis = kartesiandrivepattern.abs_x_posis[1:]
+            kartesiandrivepattern.abs_y_posis = kartesiandrivepattern.abs_y_posis[1:]
+            enderstat.abs_x_pos = enderstat.abs_x_tgt
+            enderstat.abs_y_pos = enderstat.abs_y_tgt
+            plot(enderstat, circledrivepattern, kartesiandrivepattern)
+            kartesiandrivepattern.actual_point += 1
 
     def auto_trajectory_drive(self):
-        while len(circledrivepattern.abs_x_posis) != 0:
-            time.sleep(circledrivepattern.wait_at_pos)
-            self.next_trajectory_step()
-            time.sleep(circledrivepattern.wait_at_pos)
-            plot(enderstat, circledrivepattern, kartesiandrivepattern)
+        if circledrivepattern.active == True:
+            while len(circledrivepattern.abs_x_posis) != 0:
+                time.sleep(circledrivepattern.wait_at_pos)
+                self.next_trajectory_step()
+                time.sleep(circledrivepattern.wait_at_pos)
+                plot(enderstat, circledrivepattern, kartesiandrivepattern)
+        if kartesiandrivepattern.active == True:
+            while len(kartesiandrivepattern.abs_x_posis) != 0:
+                time.sleep(kartesiandrivepattern.wait_at_pos)
+                self.next_trajectory_step()
+                time.sleep(kartesiandrivepattern.wait_at_pos)
+                plot(enderstat, circledrivepattern, kartesiandrivepattern)
 
 
 class CreateKartesianTrajectory:
@@ -889,7 +908,11 @@ def plot(
     if enderstat.tank_architecture is not None:
         if enderstat.tank_architecture == "medium":
             tank_archtctrs = [
-                Rectangle((100, 400 - enderstat.abs_z_pos), width=150, height=100)
+                Rectangle(
+                    (100, hit_box_tank.z_lim_height - enderstat.abs_z_pos),
+                    width=150,
+                    height=100,
+                )
             ]
             pc = PatchCollection(
                 tank_archtctrs, facecolor="lightsteelblue", alpha=0.7, edgecolor="black"
@@ -897,7 +920,11 @@ def plot(
             ax2.add_collection(pc)
         if enderstat.tank_architecture == "high":
             tank_archtctrs = [
-                Rectangle((100, 400 - enderstat.abs_z_pos), width=150, height=150)
+                Rectangle(
+                    (100, hit_box_tank.z_lim_height - enderstat.abs_z_pos),
+                    width=150,
+                    height=200,
+                )
             ]
             pc = PatchCollection(
                 tank_archtctrs, facecolor="lightsteelblue", alpha=0.7, edgecolor="black"
@@ -911,14 +938,14 @@ def plot(
             ax2.add_collection(pc)
 
     ax2.hlines(
-        400 - enderstat.abs_z_pos,
+        hit_box_tank.z_lim_height - enderstat.abs_z_pos,
         50,
         300,
         linestyles="solid",
         color="black",
         label="z-table",
     )
-    ax2.scatter(enderstat.abs_x_pos, 0, marker=".", label="Currently")
+    ax2.scatter(enderstat.abs_x_pos, 50, marker=".", label="Currently")
     if enderstat.abs_z_tgt is not None:
         ax2.hlines(
             enderstat.abs_z_tgt,
@@ -936,7 +963,7 @@ def plot(
     ax2.set_ylim((0, 400))
     ax2.grid()
     ax2.legend()
-    # ax2.hlines(center_x_y, 0, 200, linestyles="dotted", color="black")
+    # ax2.hlines(center_x_y, 0, hit_box_tank.z_lim_height, linestyles="dotted", color="black")
 
     canvas = FigureCanvasTkAgg(fig, master=app)
     canvas.draw()

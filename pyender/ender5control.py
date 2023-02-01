@@ -70,6 +70,7 @@ def move_to_absolute_x(ser, enderstat: Ender5Stat) -> None:
     enderstat.motion_speed : movement speed in [mm/min]
     """
     command(ser, f"G0 X{enderstat.abs_x_tgt} F{enderstat.motion_speed}\r\n")
+    print(enderstat)
 
 
 def move_to_absolute_y(ser, enderstat: Ender5Stat) -> None:
@@ -78,6 +79,7 @@ def move_to_absolute_y(ser, enderstat: Ender5Stat) -> None:
     enderstat.motion_speed : movement speed in [mm/min]
     """
     command(ser, f"G0 Y{enderstat.abs_y_tgt} F{enderstat.motion_speed}\r\n")
+    print(enderstat)
 
 
 def move_to_absolute_z(ser, enderstat: Ender5Stat) -> None:
@@ -86,6 +88,7 @@ def move_to_absolute_z(ser, enderstat: Ender5Stat) -> None:
     enderstat.motion_speed : movement speed in [mm/min]
     """
     command(ser, f"G0 Z{enderstat.abs_z_tgt} F{enderstat.motion_speed}\r\n")
+    print(enderstat)
 
 
 def move_to_absolute_x_y(ser, enderstat: Ender5Stat) -> None:
@@ -98,6 +101,7 @@ def move_to_absolute_x_y(ser, enderstat: Ender5Stat) -> None:
         ser,
         f"G0 X{enderstat.abs_x_tgt} Y{enderstat.abs_y_tgt} F{enderstat.motion_speed}\r\n",
     )
+    print(enderstat)
 
 
 def disable_steppers(ser) -> None:
@@ -111,10 +115,12 @@ def enable_steppers(ser) -> None:
 def x_y_home(ser, enderstat: Ender5Stat) -> None:
     command(ser, f"G28 X0 Y0 F{enderstat.motion_speed}\r\n")
     command(ser, f"G28 Z0 F{enderstat.motion_speed}\r\n")
+    print(enderstat)
 
 
 def x_y_center(ser, enderstat: Ender5Stat) -> None:
     command(ser, f"G0 X180 Y180 F{enderstat.motion_speed}\r\n")
+    print(enderstat)
 
 
 def turn_off_fan(ser) -> None:
