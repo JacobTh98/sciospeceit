@@ -145,7 +145,7 @@ circledrivepattern = CircleDrivePattern(
 hit_box_tank = HitBoxTank(
     tank_architecture=None,
     z_lim_height=0,
-    r_max=75,
+    r_max=85,
 )
 
 kartesiandrivepattern = KartesianDrivePattern(
