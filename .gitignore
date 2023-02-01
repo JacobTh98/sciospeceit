@@ -1,2 +1,5 @@
 .ipynb_checkpoints
+__pycache__
+.vscode
 /sciopy/__pycache__
+/pyender/__pycache__

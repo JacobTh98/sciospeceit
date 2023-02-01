@@ -1,22 +1,11 @@
-"""
-sciopy: Python based interface module for ScioSpec Electrical Impedance Tomography device.
-"""
-
-__author__ = "Jacob Peter Thönes"
-__author_email__ = "jacob.thoenes@uni-rostock.de"
-APP_NAME = "sciopy"
-APP_VERSION = "1.0.0"
-APP_DESCRIPTION = "A Python Package for ScioSpec EIT (electrical impedance tomography) system with 16, 32, 64, 128 or 256 channels"
-
-
-from .communication_info import (
+from .print_command_info import (
     print_syntax,
     print_general_system_messages,
     print_acknowledge_messages,
     print_command_list,
 )
 
-from .connect import (
+from .com_handling import (
     available_serial_ports,
     connect_COM_port,
     serial_write,
@@ -24,6 +13,7 @@ from .connect import (
 )
 
 from .doteit import (
+    doteit_in_SingleEitFrame,
     list_eit_files,
     list_all_files,
     single_eit_in_pickle,
@@ -33,7 +23,7 @@ from .doteit import (
 )
 
 from .setup_m import (
-    GeneralSystemMessages,
+    SystemMessageCallback,
     SaveSettings,
     SoftwareReset,
     ResetMeasurementSetup,
@@ -41,7 +31,7 @@ from .setup_m import (
     GetMeasurementSetup,
     SetOutputConfiguration,
     GetOutputConfiguration,
-    Start_StopMeasurement,
+    StartStopMeasurement,
     GetTemperature,
     SetBatteryControll,
     GetBatteryControll,
@@ -59,17 +49,18 @@ from .setup_m import (
 
 
 __all__ = [
-    # communication_info
+    # print_command_info
     "print_syntax",
     "print_general_system_messages",
     "print_acknowledge_messages",
     "print_command_list",
-    # connect
+    # com_handling
     "available_serial_ports",
     "connect_COM_port",
     "serial_write",
     "disconnect_COM_port",
     # doteit
+    "doteit_in_SingleEitFrame",
     "list_eit_files",
     "list_all_files",
     "single_eit_in_pickle",
@@ -77,7 +68,7 @@ __all__ = [
     "convert_fulldir_doteit_to_pickle",
     "convert_fulldir_doteit_to_npz",
     # setup_m
-    "GeneralSystemMessages",
+    "SystemMessageCallback",
     "SaveSettings",
     "SoftwareReset",
     "ResetMeasurementSetup",
@@ -85,7 +76,7 @@ __all__ = [
     "GetMeasurementSetup",
     "SetOutputConfiguration",
     "GetOutputConfiguration",
-    "Start_StopMeasurement",
+    "StartStopMeasurement",
     "GetTemperature",
     "SetBatteryControll",
     "GetBatteryControll",

@@ -3,7 +3,7 @@
 import os
 import numpy as np
 import pickle
-from dataclasses import dataclass
+from sciopy_dataclasses import SingleEitFrame
 
 
 header_keys = [
@@ -28,11 +28,6 @@ header_keys = [
 ]
 
 
-@dataclass
-class SingleEitFrame:
-    pass
-
-
 def doteit_in_SingleEitFrame(read_content: list) -> SingleEitFrame:
     """Returns single object without saving anything."""
     frame = SingleEitFrame()
@@ -53,9 +48,6 @@ def doteit_in_SingleEitFrame(read_content: list) -> SingleEitFrame:
             fin_val[idx] = complex(lct[cmpl], lct[cmpl + 1])
         setattr(frame, el_cmb, np.array(fin_val))
     return frame
-
-
-### The following functions are loaded in __init__.py
 
 
 def list_eit_files(path: str) -> list:
