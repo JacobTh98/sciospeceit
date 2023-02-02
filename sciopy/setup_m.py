@@ -1,5 +1,3 @@
-# This sadly doesn´t work
-
 # https://stackoverflow.com/questions/17589942/using-pyserial-to-send-binary-data
 # from connect import connect_COM_port
 from time import sleep
@@ -10,7 +8,8 @@ def SystemMessageCallback(serial, prnt_msg: bool = True, ret_hex_int: int = 0):
     serial      ... serial connection
     prnt_msg    ... print out the buffer
     ret_hex_int ... Parameters -> ['none','hex', 'int', 'both']
-
+    
+    @v=1.0.3
     """
     msg_dict = {
         "0x01": "No message inside the message buffer",
