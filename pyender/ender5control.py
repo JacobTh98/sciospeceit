@@ -223,3 +223,16 @@ def compute_abs_x_y_from_x_y(
         return x, y
     else:
         return x, y
+
+
+def calculate_moving_time(enderstat: Ender5Stat, tol: int = 1) -> float:
+    """
+    Computes the time that the Ender5 needs for moving from one point to another in seconds including a time tolerance of 1s.
+    """
+    dx = enderstat.abs_x_tgt - enderstat.abs_x_pos
+    dy = enderstat.abs_y_tgt - enderstat.abs_y_pos
+    dz = enderstat.abs_z_tgt - enderstat.abs_z_pos
+    s = np.sqrt(dx**2 + dy**2 + dz**2)
+    print("")
+    v = enderstat.motion_speed / 60.0
+    return s / v + tol

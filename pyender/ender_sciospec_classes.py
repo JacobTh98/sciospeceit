@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import numpy as np
 from typing import Union, List
 
 
@@ -36,17 +37,12 @@ class CircleDrivePattern:
     wait_at_pos: int  # [s]
     radius: Union[int, float]  # [mm]
     phi_steps: Union[int, float]  # [degree/step]
-    abs_x_posis: List[Union[int, float]]
-    abs_y_posis: List[Union[int, float]]
-    abs_z_posis: List[Union[int, float]]
+    abs_x_posis: np.ndarray
+    abs_y_posis: np.ndarray
+    abs_z_posis: np.ndarray
     motion_speed: Union[int, float]
     n_points: int
     actual_point: int
-
-
-@dataclass
-class MultipleCircleDrivePattern:
-    pass
 
 
 @dataclass
@@ -60,9 +56,9 @@ class KartesianDrivePattern:
     y_stop: Union[int, float]
     x_stp_num: int
     y_stp_num: int
-    abs_x_posis: List[Union[int, float]]
-    abs_y_posis: List[Union[int, float]]
-    abs_z_pos: Union[int, float]
+    abs_x_posis: np.ndarray
+    abs_y_posis: np.ndarray
+    abs_z_posis: np.ndarray
     n_points: int
     actual_point: int
 

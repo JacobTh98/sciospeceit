@@ -7,6 +7,13 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
+from sciopy import (
+    SystemMessageCallback,
+    configuration_01,
+    StartStopMeasurement,
+)
+from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
+
 try:
     import serial
 except ImportError:
@@ -36,6 +43,8 @@ from tkinter import (
     Text,
     Tk,
     messagebox,
+    Toplevel,
+    filedialog,
 )
 
 from ender5control import (
@@ -49,6 +58,7 @@ from ender5control import (
     available_serial_ports,
     compute_abs_x_y_from_r_phi,
     compute_abs_x_y_from_x_y,
+    calculate_moving_time,
 )
 
 """ Read resolution and set for visualization. """
@@ -107,10 +117,18 @@ class Log:
 
 detected_com_ports = available_serial_ports()  # ["COM3", "COM4"]
 tank_architectures = ["select tank", "medium", "high"]
+object_architectures = ["circle", "triangle", "square"]
 step_width = [0.1, 1, 10]
 
 center_x_y = 180
 center_z = 0
+
+scio_spec_measurement_config = ScioSpecMeasurementConfig(
+    sample_per_step=10,
+    actual_sample=0,
+    s_path="tmp_data/",  # TBD: Select savepath with seperate window!
+    object="circle",
+)
 
 
 manual_step = mmPerStep(10)
@@ -134,11 +152,11 @@ circledrivepattern = CircleDrivePattern(
     wait_at_pos=1,  # time to wait in [s]
     radius=100,
     phi_steps=10,
-    abs_x_posis=compute_abs_x_y_from_r_phi(100, 10)[0],
-    abs_y_posis=compute_abs_x_y_from_r_phi(100, 10)[1],
+    abs_x_posis=np.zeros(1),
+    abs_y_posis=np.zeros(1),
     abs_z_posis=enderstat.abs_z_pos,
     motion_speed=enderstat.motion_speed,
-    n_points=len(compute_abs_x_y_from_r_phi(100, 10)[0]),
+    n_points=0,
     actual_point=0,
 )
 
@@ -158,18 +176,10 @@ kartesiandrivepattern = KartesianDrivePattern(
     y_stop=center_x_y,
     x_stp_num=10,
     y_stp_num=10,
-    abs_x_posis=compute_abs_x_y_from_x_y(
-        160, 160, center_x_y, center_x_y, 10, 10, hit_box_tank
-    )[0],
-    abs_y_posis=compute_abs_x_y_from_x_y(
-        160, 160, center_x_y, center_x_y, 10, 10, hit_box_tank
-    )[1],
-    abs_z_pos=enderstat.abs_z_pos,
-    n_points=len(
-        compute_abs_x_y_from_x_y(
-            160, 160, center_x_y, center_x_y, 10, 10, hit_box_tank
-        )[1]
-    ),
+    abs_x_posis=np.zeros(1),
+    abs_y_posis=np.zeros(1),
+    abs_z_posis=enderstat.abs_z_pos,
+    n_points=0,
     actual_point=0,
 )
 
@@ -279,16 +289,87 @@ class ConnectScioSpec:
             pass
 
     def connect_interact(self):
+        global COM_ScioSpec
 
         self.connect_interact_button["text"] = "Connecting ..."
         print("Connection to ", str(self.com_dropdown_sciospec.get()), "established.")
-        # if condition, if serial connection is established !!!
-        self.connect_interact_button["text"] = "Connection established"
-        self.connect_interact_button["bg"] = "green"
-        self.connect_interact_button["fg"] = "black"
-        self.connect_interact_button["state"] = "disabled"
-        self.com_dropdown_sciospec["state"] = "disabled"
-        # Probably a callback message from the ScioSpec device.
+        try:
+            COM_ScioSpec = serial.Serial(self.com_dropdown_sciospec.get(), 115200)
+            time.sleep(1)
+            self.connect_interact_button["text"] = "Connection established"
+            self.connect_interact_button["bg"] = "green"
+            self.connect_interact_button["fg"] = "black"
+            self.connect_interact_button["state"] = "disabled"
+            self.com_dropdown_sciospec["state"] = "disabled"
+
+            # TBD: If config is finished uncomment the following part:
+            # scio_spec_config.opnen_cnf_window_btn["state"] = "normal"
+            print("Initialization done.")
+
+            # TBD: Programm new button that allows a selection of the configuration!
+            configuration_01(COM_ScioSpec)  # tbd in ender gui
+            SystemMessageCallback(COM_ScioSpec, prnt_msg=False)
+
+        except BaseException:
+            print("Can not open", self.com_dropdown_sciospec.get())
+
+
+class ScioSpecConfig:
+    def __init__(self, app) -> None:
+        self.opnen_cnf_window_btn = Button(
+            app, text="Open Config", command=self.config_window
+        )
+        self.opnen_cnf_window_btn.place(
+            x=3 * spacer + btn_width + x_0ff,
+            y=1 * spacer + btn_width + spacer,
+            width=2 * btn_width + 2 * spacer,
+            height=btn_height,
+        )
+
+    def config_window(self):
+        self.sciospec_cnf_wndow = Toplevel(app)
+        self.sciospec_cnf_wndow.title("Configure ScioSpec")
+        self.sciospec_cnf_wndow.geometry("800x400")
+
+        def open_path_select():
+            scio_spec_measurement_config.s_path = filedialog.askdirectory(
+                title="Select save path"
+            )
+
+        def set_sciospec_settings():
+            scio_spec_measurement_config.sample_per_step = int(
+                entry_sample_per_step.get()
+            )
+            scio_spec_measurement_config.object = objct_dropdown.get()
+            scio_spec_measurement_config.actual_sample = 0
+            print(scio_spec_measurement_config)
+            self.sciospec_cnf_wndow.destroy()
+
+        labels = ["Samples per step:", "Save path:", "Object:"]
+
+        for i in range(len(labels)):
+            label = Label(self.sciospec_cnf_wndow, text=labels[i])
+            label.grid(row=i, column=0, pady=(0, 5))
+
+        entry_sample_per_step = Entry(self.sciospec_cnf_wndow)
+        entry_sample_per_step.grid(row=0, column=1, pady=(0, 5))
+
+        btn_save_path = Button(
+            self.sciospec_cnf_wndow, text="Select", command=open_path_select
+        )
+        btn_save_path.grid(row=1, column=1, pady=(0, 5))
+
+        objct_dropdown = ttk.Combobox(
+            self.sciospec_cnf_wndow, values=object_architectures
+        )
+        objct_dropdown.grid(row=2, column=1, pady=(0, 5))
+
+        btn_set_all = Button(
+            self.sciospec_cnf_wndow,
+            text="Set all selections",
+            command=set_sciospec_settings,
+        )
+        btn_set_all.grid(row=3, column=2, pady=(0, 5))
 
 
 class TankSelect:
@@ -477,14 +558,14 @@ class MovementXYZ:
         self.motion_speed.set(1500)
         self.motion_speed.bind("<ButtonRelease-1>", self.motion_speed_callback)
         self.motion_speed.place(
-            x=x_0ff + 5 * btn_width + 3 * spacer,
+            x=x_0ff + 5 * btn_width + 2 * spacer,
             y=y_0ff,
             height=3 * btn_height + 2 * spacer,
             width=2 * btn_width,
         )
         self.motion_speed_label = Label(app, text="M\no\nt\ni\no\nn\n\ns\np\ne\ne\nd")
         self.motion_speed_label.place(
-            x=x_0ff + 7 * btn_width + 3 * spacer,
+            x=x_0ff + 7 * btn_width + 2 * spacer,
             y=y_0ff,
             height=3 * btn_height + 2 * spacer,
             width=btn_width // 2,
@@ -628,7 +709,7 @@ class CreateCircularTrajectory:
             width=btn_width,
             height=btn_height,
         )
-        self.phi_unit = Label(app, text="step/360°").place(
+        self.phi_unit = Label(app, text="°/step").place(
             x=2 * spacer + 2 * btn_width + btn_width // 2,
             y=y_0ff + 5 * btn_height + 2 * spacer,
             width=btn_width + btn_width // 2,
@@ -652,20 +733,33 @@ class CreateCircularTrajectory:
         circledrivepattern.phi_steps = int(self.phi_entry.get())
         next_auto_drive.next_step_btn["state"] = "normal"
         next_auto_drive.auto_step_btn["state"] = "normal"
+        next_auto_drive.reset_trajectory_btn["state"]="normal"
 
         circledrivepattern.active = True
-        circledrivepattern.wait_at_pos = 1
+        circledrivepattern.wait_at_pos = (
+            1  # TBD: Is 1 enough? Compute it from "ScioSpecMeasurementConfig"?
+        )
         x, y = compute_abs_x_y_from_r_phi(
             circledrivepattern.radius, circledrivepattern.phi_steps
         )
-        circledrivepattern.abs_x_posis = x
-        circledrivepattern.abs_y_posis = y
-        circledrivepattern.abs_z_posis = enderstat.abs_z_pos
+        if circledrivepattern.n_points == 0:
+            circledrivepattern.abs_x_posis = x
+            circledrivepattern.abs_y_posis = y
+            circledrivepattern.abs_z_posis = enderstat.abs_z_pos
+        else:
+            circledrivepattern.abs_x_posis = np.concatenate(
+                (circledrivepattern.abs_x_posis, x)
+            )
+            circledrivepattern.abs_y_posis = np.concatenate(
+                (circledrivepattern.abs_y_posis, y)
+            )
+            circledrivepattern.abs_z_posis = enderstat.abs_z_pos
+        circledrivepattern.n_points += len(x)
         circledrivepattern.motion_speed = enderstat.motion_speed
         plot(enderstat, circledrivepattern, kartesiandrivepattern)
 
 
-class NextAutoDrive:
+class NextAutoDriveReset:
     def __init__(self, app) -> None:
         self.next_step_btn = Button(
             app, text="Next step", command=self.next_trajectory_step, state="disabled"
@@ -687,7 +781,17 @@ class NextAutoDrive:
             height=btn_height,
         )
 
-    def next_trajectory_step(self):
+        self.reset_trajectory_btn = Button(
+            app, text="Reset", command=self.reset_trajectory, state="disabled"
+        )
+        self.reset_trajectory_btn.place(
+            x=3 * spacer + 4 * btn_width,
+            y=y_0ff + 6 * btn_height + 3 * spacer,
+            width=btn_width,
+            height=btn_height,
+        )
+
+    def next_trajectory_step(self) -> None:
         if circledrivepattern.active == True:
             print(circledrivepattern.actual_point)
             enderstat.abs_x_tgt = circledrivepattern.abs_x_posis[0]
@@ -699,31 +803,58 @@ class NextAutoDrive:
             enderstat.abs_y_pos = enderstat.abs_y_tgt
             plot(enderstat, circledrivepattern, kartesiandrivepattern)
             circledrivepattern.actual_point += 1
+
         if kartesiandrivepattern.active == True:
             print(kartesiandrivepattern.actual_point)
             enderstat.abs_x_tgt = kartesiandrivepattern.abs_x_posis[0]
             enderstat.abs_y_tgt = kartesiandrivepattern.abs_y_posis[0]
             move_to_absolute_x_y(COM_Ender, enderstat)
+            time.sleep(calculate_moving_time(enderstat))
             kartesiandrivepattern.abs_x_posis = kartesiandrivepattern.abs_x_posis[1:]
             kartesiandrivepattern.abs_y_posis = kartesiandrivepattern.abs_y_posis[1:]
             enderstat.abs_x_pos = enderstat.abs_x_tgt
             enderstat.abs_y_pos = enderstat.abs_y_tgt
             plot(enderstat, circledrivepattern, kartesiandrivepattern)
             kartesiandrivepattern.actual_point += 1
+        # Measurement:
+        for i in range(scio_spec_measurement_config.sample_per_step):
+            measurement_data_hex = StartStopMeasurement(COM_ScioSpec)
+            np.savez(
+                scio_spec_measurement_config.s_path
+                + f"X{int(enderstat.abs_x_pos)}_Y{int(enderstat.abs_y_pos)}_Z{int(enderstat.abs_z_pos)}_Sample{scio_spec_measurement_config.actual_sample}.npy",
+                config=scio_spec_measurement_config,
+                data=measurement_data_hex,
+                allow_pickle=True,
+            )
+            scio_spec_measurement_config.actual_sample += 1
 
-    def auto_trajectory_drive(self):
+    def reset_trajectory(self):
+        circledrivepattern.active = False
+        kartesiandrivepattern.active = False
+
+        circledrivepattern.abs_x_posis = np.zeros(1)
+        circledrivepattern.abs_y_posis = np.zeros(1)
+        circledrivepattern.abs_z_posis = np.zeros(1)
+
+        kartesiandrivepattern.abs_x_posis = np.zeros(1)
+        kartesiandrivepattern.abs_y_posis = np.zeros(1)
+        kartesiandrivepattern.abs_z_posis = np.zeros(1)
+        plot(enderstat, circledrivepattern, kartesiandrivepattern)
+        self.auto_step_btn["state"] = "disabled"
+        self.next_step_btn["state"] = "disabled"
+        self.reset_trajectory_btn["state"] = "disabled"
+
+    def auto_trajectory_drive(self) -> None:
         if circledrivepattern.active == True:
             while len(circledrivepattern.abs_x_posis) != 0:
                 time.sleep(circledrivepattern.wait_at_pos)
                 self.next_trajectory_step()
                 time.sleep(circledrivepattern.wait_at_pos)
-                plot(enderstat, circledrivepattern, kartesiandrivepattern)
         if kartesiandrivepattern.active == True:
             while len(kartesiandrivepattern.abs_x_posis) != 0:
                 time.sleep(kartesiandrivepattern.wait_at_pos)
                 self.next_trajectory_step()
                 time.sleep(kartesiandrivepattern.wait_at_pos)
-                plot(enderstat, circledrivepattern, kartesiandrivepattern)
 
 
 class CreateKartesianTrajectory:
@@ -849,6 +980,7 @@ class CreateKartesianTrajectory:
         kartesiandrivepattern.y_stp_num = int(self.y_step.get())
         next_auto_drive.next_step_btn["state"] = "normal"
         next_auto_drive.auto_step_btn["state"] = "normal"
+        next_auto_drive.reset_trajectory_btn["state"]="normal"
 
         circledrivepattern.wait_at_pos = 1
         x, y = compute_abs_x_y_from_x_y(
@@ -889,11 +1021,14 @@ def plot(
 
     ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".")
     if enderstat.abs_x_tgt is not None or enderstat.abs_y_tgt is not None:
-        ax1.scatter(enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*")
+        ax1.scatter(enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*", label="Targets")
+        ax1.legend()
     if cdp.active is True:
-        ax1.scatter(cdp.abs_x_posis, cdp.abs_y_posis, marker="*")
+        ax1.scatter(cdp.abs_x_posis, cdp.abs_y_posis, marker="*",s = 10, label="Targets")
+        ax1.legend()
     if kdp.active is True:
-        ax1.scatter(kdp.abs_x_posis, kdp.abs_y_posis)
+        ax1.scatter(kdp.abs_x_posis, kdp.abs_y_posis, marker="*", s = 10, label="Targets")
+        ax1.legend()
     ax1.set_ylabel("absolute y[mm]")
     ax1.set_xlabel("absolute x[mm]")
     ax1.set_xlim((0, 350))
@@ -945,7 +1080,7 @@ def plot(
         color="black",
         label="z-table",
     )
-    ax2.scatter(enderstat.abs_x_pos, 50, marker=".", label="Currently")
+    ax2.scatter(enderstat.abs_x_pos, 380, marker=".", label="Currently")
     if enderstat.abs_z_tgt is not None:
         ax2.hlines(
             enderstat.abs_z_tgt,
@@ -1008,12 +1143,13 @@ app.grid()
 
 connect_ender_5 = ConnectEnder5(app)
 connect_sciospec = ConnectScioSpec(app)
+scio_spec_config = ScioSpecConfig(app)
 movement_xyz = MovementXYZ(app)
 tankselect = TankSelect()
 stepwidthselect = StepWidthSelect(app)
 create_circular_trajectory = CreateCircularTrajectory(app)
 create_kartesian_trajectory = CreateKartesianTrajectory(app)
-next_auto_drive = NextAutoDrive(app)
+next_auto_drive = NextAutoDriveReset(app)
 LOG = Log(app)
 sys.stdout = LOG
 
