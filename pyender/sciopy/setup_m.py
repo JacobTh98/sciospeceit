@@ -1,15 +1,21 @@
 # https://stackoverflow.com/questions/17589942/using-pyserial-to-send-binary-data
 # from connect import connect_COM_port
 from time import sleep
+import struct
+from typing import Union
+from .sciopy_dataclasses import SingleFrame  # .
+import numpy as np
 
 
-def SystemMessageCallback(serial, prnt_msg: bool = True, ret_hex_int: int = 0):
+def SystemMessageCallback(
+    serial, prnt_msg: bool = True, ret_hex_int: Union[None, str] = None
+):
     """Reads the message buffer of a serial connection. Also prints out the general system message.
     serial      ... serial connection
     prnt_msg    ... print out the buffer
     ret_hex_int ... Parameters -> ['none','hex', 'int', 'both']
 
-    @v=1.0.3
+    @v=1.0.4
     """
     msg_dict = {
         "0x01": "No message inside the message buffer",
@@ -43,15 +49,17 @@ def SystemMessageCallback(serial, prnt_msg: bool = True, ret_hex_int: int = 0):
     received_hex = [hex(receive) for receive in received]
     try:
         msg_idx = received_hex.index("0x18")
-        print(msg_dict[received_hex[msg_idx + 2]])
+        if prnt_msg:
+            print(msg_dict[received_hex[msg_idx + 2]])
     except BaseException:
-        print(msg_dict["0x01"])
+        if prnt_msg:
+            print(msg_dict["0x01"])
         prnt_msg = False
     if prnt_msg:
         print("message buffer:\n", received_hex)
         print("message length:\t", data_count)
 
-    if ret_hex_int == "none":
+    if ret_hex_int == None:
         return
     elif ret_hex_int == "hex":
         return received_hex
@@ -244,18 +252,73 @@ def GetOutputConfiguration(serial) -> None:
     pass
 
 
-def StartStopMeasurement(serial, command: int) -> None:
-    """
-    A new measurement can only be started when no other measurement is ongoing. A description is can be found in
-    section "Measured Data".
-        command = 1 for start
-        command = 0 for stop
-    """
-    if command == 1:
-        serial.write(bytearray([0xB4, 0x01, 0x01, 0xB4]))
-    else:
-        serial.write(bytearray([0xB4, 0x01, 0x00, 0xB4]))
-    SystemMessageCallback(serial)
+def StartStopMeasurement(serial) -> list:
+    print("Starting measurement:")
+    serial.write(bytearray([0xB4, 0x01, 0x01, 0xB4]))
+    measurement_data_hex = SystemMessageCallback(
+        serial, prnt_msg=False, ret_hex_int="hex"
+    )
+    print("Stopping measurement:")
+    serial.write(bytearray([0xB4, 0x01, 0x00, 0xB4]))
+    SystemMessageCallback(serial, prnt_msg=False, ret_hex_int="int")
+    return measurement_data_hex
+
+
+def del_hex_in_list(lst: list) -> list:
+    return [
+        "0" + ele.replace("0x", "") if len(ele) == 1 else ele.replace("0x", "")
+        for ele in lst
+    ]
+
+
+def bytesarray_to_float(bytes_array: np.ndarray) -> float:
+    bytes_array = [int(b, 16) for b in bytes_array]
+    bytes_array = bytes(bytes_array)
+    return struct.unpack("!f", bytes(bytes_array))[0]
+
+
+def bytesarray_to_int(bytes_array: np.ndarray) -> int:
+    bytes_array = bytesarray_to_byteslist(bytes_array)
+    return int.from_bytes(bytes_array, "big")
+
+
+def bytesarray_to_byteslist(bytes_array: np.ndarray) -> list:
+    bytes_array = [int(b, 16) for b in bytes_array]
+    return bytes(bytes_array)
+
+
+def reshape_measurement_buffer(lst: list) -> np.ndarray:
+    idx_b4 = [i for i, ele in enumerate(lst) if ele == "b4"]
+    idx_b4 = np.array(idx_b4)
+    step = abs(idx_b4[1] - idx_b4[0]) + 1
+    return np.array(
+        [lst[i : i + step] for i in range(idx_b4[0], idx_b4[-1] + step, step)],
+        dtype=list,
+    )[:-1]
+
+
+def parse_single_frame(lst_ele: np.ndarray) -> SingleFrame:
+    channels = {}
+    enum = 0
+    for i in range(11, 135, 8):
+        enum += 1
+        channels[f"ch_{enum}"] = complex(
+            bytesarray_to_float(lst_ele[i : i + 4]),
+            bytesarray_to_float(lst_ele[i + 4 : i + 8]),
+        )
+
+    excitation_stgs = np.array([ele for ele in lst_ele[3:5]])
+
+    sgl_frm = SingleFrame(
+        start_tag=lst_ele[0],
+        channel_group=int(lst_ele[2]),
+        excitation_stgs=excitation_stgs,
+        frequency_row=lst_ele[5:7],
+        timestamp=bytesarray_to_int(lst_ele[7:11]),
+        **channels,
+        end_tag=lst_ele[139],
+    )
+    return sgl_frm
 
 
 def GetTemperature() -> None:
@@ -387,78 +450,3 @@ def GetFirmwareIDs(serial) -> None:
     """Get firmware IDs"""
     serial.write(bytearray([0xD2, 0x00, 0xD2]))
     SystemMessageCallback(serial)
-
-
-def Config_01(serial) -> None:
-    serial.write(bytearray([0xB0, 0x01, 0x01, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x02, 0x00, 0x09, 0xB0]))
-    serial.write(
-        bytearray(
-            [0xB0, 0x09, 0x05, 0x3F, 0x50, 0x62, 0x4D, 0xD2, 0xF1, 0xA9, 0xFC, 0xB0]
-        )
-    )
-    serial.write(bytearray([0xB0, 0x02, 0x0D, 0x01, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x09, 0x01, 0x00, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x08, 0x01, 0x01, 0xB0]))
-    serial.write(bytearray([0xB0, 0x02, 0x0C, 0x01, 0xB0]))
-    serial.write(bytearray([0xB0, 0x05, 0x03, 0x40, 0x00, 0x00, 0x00, 0xB0]))
-    serial.write(
-        bytearray(
-            [
-                0xB0,
-                0x0C,
-                0x04,
-                0x44,
-                0x7A,
-                0x00,
-                0x00,
-                0x44,
-                0x7A,
-                0x00,
-                0x00,
-                0x00,
-                0x01,
-                0x00,
-                0xB0,
-            ]
-        )
-    )
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x01, 0x02, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x02, 0x03, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x03, 0x04, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x04, 0x05, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x05, 0x06, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x06, 0x07, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x07, 0x08, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x08, 0x09, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x09, 0x0A, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x0A, 0x0B, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x0B, 0x0C, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x0C, 0x0D, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x0D, 0x0E, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x0E, 0x0F, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x0F, 0x10, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x10, 0x11, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x11, 0x12, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x12, 0x13, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x13, 0x14, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x14, 0x15, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x15, 0x16, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x16, 0x17, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x17, 0x18, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x18, 0x19, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x19, 0x1A, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x1A, 0x1B, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x1B, 0x1C, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x1C, 0x1D, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x1D, 0x1E, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x1E, 0x1F, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x1F, 0x20, 0xB0]))
-    serial.write(bytearray([0xB0, 0x03, 0x06, 0x20, 0x01, 0xB0]))
-    serial.write(bytearray([0xB1, 0x01, 0x03, 0xB1]))
-    serial.write(bytearray([0xB2, 0x02, 0x01, 0x01, 0xB2]))
-    serial.write(bytearray([0xB2, 0x02, 0x03, 0x01, 0xB2]))
-    serial.write(bytearray([0xB2, 0x02, 0x02, 0x01, 0xB2]))
-    serial.write(bytearray([0xB4, 0x01, 0x01, 0xB4]))
-    sleep(10)
-    serial.write(bytearray([0xB4, 0x01, 0x00, 0xB4]))

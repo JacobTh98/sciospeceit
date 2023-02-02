@@ -1,3 +1,13 @@
+"""
+Tasks:
+-> "run_meas_script" mit json o.ae. ansteuern.
+-> Geschwindigkeitstest für Messungen
+-> Aufteilung eines BurstCount >1 Skript in einzelne Messungen
+-> reshape_measurement_buffer() funktioniert noch nicht im erstgenannten Skript.
+-> Anpassen der GUI auf Grund der "call" umstände
+"""
+
+
 import numpy as np
 import time
 import sys
@@ -6,11 +16,14 @@ from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from subprocess import call
 
 from sciopy import (
     SystemMessageCallback,
     configuration_01,
     StartStopMeasurement,
+    del_hex_in_list,
+    reshape_measurement_buffer,
 )
 from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
 
@@ -301,14 +314,15 @@ class ConnectScioSpec:
             self.connect_interact_button["fg"] = "black"
             self.connect_interact_button["state"] = "disabled"
             self.com_dropdown_sciospec["state"] = "disabled"
+            next_auto_drive.measure_btn["state"] = "normal"
 
             # TBD: If config is finished uncomment the following part:
             # scio_spec_config.opnen_cnf_window_btn["state"] = "normal"
             print("Initialization done.")
 
             # TBD: Programm new button that allows a selection of the configuration!
-            configuration_01(COM_ScioSpec)  # tbd in ender gui
-            SystemMessageCallback(COM_ScioSpec, prnt_msg=False)
+            # configuration_01(COM_ScioSpec)  # tbd in ender gui
+            # SystemMessageCallback(COM_ScioSpec, prnt_msg=False)
 
         except BaseException:
             print("Can not open", self.com_dropdown_sciospec.get())
@@ -332,8 +346,8 @@ class ScioSpecConfig:
         self.sciospec_cnf_wndow.geometry("800x400")
 
         def open_path_select():
-            scio_spec_measurement_config.s_path = filedialog.askdirectory(
-                title="Select save path"
+            scio_spec_measurement_config.s_path = (
+                filedialog.askdirectory(title="Select save path") + "/"
             )
 
         def set_sciospec_settings():
@@ -344,6 +358,10 @@ class ScioSpecConfig:
             scio_spec_measurement_config.actual_sample = 0
             print(scio_spec_measurement_config)
             self.sciospec_cnf_wndow.destroy()
+
+        def set_config():
+            configuration_01(COM_ScioSpec)  # tbd in ender gui
+            SystemMessageCallback(COM_ScioSpec, prnt_msg=True)
 
         labels = ["Samples per step:", "Save path:", "Object:"]
 
@@ -363,6 +381,11 @@ class ScioSpecConfig:
             self.sciospec_cnf_wndow, values=object_architectures
         )
         objct_dropdown.grid(row=2, column=1, pady=(0, 5))
+
+        btn_load_cnf = Button(
+            self.sciospec_cnf_wndow, text="Set configuration", command=set_config
+        )
+        btn_load_cnf.grid(row=3, column=1, pady=(0, 5))
 
         btn_set_all = Button(
             self.sciospec_cnf_wndow,
@@ -733,7 +756,7 @@ class CreateCircularTrajectory:
         circledrivepattern.phi_steps = int(self.phi_entry.get())
         next_auto_drive.next_step_btn["state"] = "normal"
         next_auto_drive.auto_step_btn["state"] = "normal"
-        next_auto_drive.reset_trajectory_btn["state"]="normal"
+        next_auto_drive.reset_trajectory_btn["state"] = "normal"
 
         circledrivepattern.active = True
         circledrivepattern.wait_at_pos = (
@@ -759,7 +782,7 @@ class CreateCircularTrajectory:
         plot(enderstat, circledrivepattern, kartesiandrivepattern)
 
 
-class NextAutoDriveReset:
+class NextAutoDriveResetMeasure:
     def __init__(self, app) -> None:
         self.next_step_btn = Button(
             app, text="Next step", command=self.next_trajectory_step, state="disabled"
@@ -791,6 +814,30 @@ class NextAutoDriveReset:
             height=btn_height,
         )
 
+        self.measure_btn = Button(app, text="Measaure", command=self.single_measurement)
+        self.measure_btn.place(
+            x=4 * spacer + 5 * btn_width,
+            y=y_0ff + 6 * btn_height + 3 * spacer,
+            width=2 * btn_width,
+            height=btn_height,
+        )
+
+    def single_measurement(self) -> None:
+        call(["python", "run_meas_prototype.py"])
+        """
+        measurement_data_hex = StartStopMeasurement(COM_ScioSpec)
+        print(measurement_data_hex)
+        measurement_data = del_hex_in_list(measurement_data_hex)
+        measurement_data = reshape_measurement_buffer(measurement_data)
+        np.savez(
+            scio_spec_measurement_config.s_path
+            + f"X{int(enderstat.abs_x_pos)}_Y{int(enderstat.abs_y_pos)}_Z{int(enderstat.abs_z_pos)}_Sample{scio_spec_measurement_config.actual_sample}.npy",
+            config=scio_spec_measurement_config,
+            data=measurement_data,
+            allow_pickle=True,
+        )
+        """
+
     def next_trajectory_step(self) -> None:
         if circledrivepattern.active == True:
             print(circledrivepattern.actual_point)
@@ -817,16 +864,23 @@ class NextAutoDriveReset:
             plot(enderstat, circledrivepattern, kartesiandrivepattern)
             kartesiandrivepattern.actual_point += 1
         # Measurement:
+        # TBD: Can´t be the optimal solution
+        call(["python", "run_meas_prototype.py"])
+        """
         for i in range(scio_spec_measurement_config.sample_per_step):
+            # TBD: Scaling the burst count in configure_1 is the burst count =1
             measurement_data_hex = StartStopMeasurement(COM_ScioSpec)
+            measurement_data = del_hex_in_list(measurement_data_hex)
+            measurement_data = reshape_measurement_buffer(measurement_data)
             np.savez(
                 scio_spec_measurement_config.s_path
                 + f"X{int(enderstat.abs_x_pos)}_Y{int(enderstat.abs_y_pos)}_Z{int(enderstat.abs_z_pos)}_Sample{scio_spec_measurement_config.actual_sample}.npy",
                 config=scio_spec_measurement_config,
-                data=measurement_data_hex,
+                data=measurement_data,
                 allow_pickle=True,
             )
             scio_spec_measurement_config.actual_sample += 1
+        """
 
     def reset_trajectory(self):
         circledrivepattern.active = False
@@ -980,7 +1034,7 @@ class CreateKartesianTrajectory:
         kartesiandrivepattern.y_stp_num = int(self.y_step.get())
         next_auto_drive.next_step_btn["state"] = "normal"
         next_auto_drive.auto_step_btn["state"] = "normal"
-        next_auto_drive.reset_trajectory_btn["state"]="normal"
+        next_auto_drive.reset_trajectory_btn["state"] = "normal"
 
         circledrivepattern.wait_at_pos = 1
         x, y = compute_abs_x_y_from_x_y(
@@ -1021,13 +1075,15 @@ def plot(
 
     ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".")
     if enderstat.abs_x_tgt is not None or enderstat.abs_y_tgt is not None:
-        ax1.scatter(enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*", label="Targets")
+        ax1.scatter(
+            enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*", label="Targets"
+        )
         ax1.legend()
     if cdp.active is True:
-        ax1.scatter(cdp.abs_x_posis, cdp.abs_y_posis, marker="*",s = 10, label="Targets")
+        ax1.scatter(cdp.abs_x_posis, cdp.abs_y_posis, marker="*", s=10, label="Targets")
         ax1.legend()
     if kdp.active is True:
-        ax1.scatter(kdp.abs_x_posis, kdp.abs_y_posis, marker="*", s = 10, label="Targets")
+        ax1.scatter(kdp.abs_x_posis, kdp.abs_y_posis, marker="*", s=10, label="Targets")
         ax1.legend()
     ax1.set_ylabel("absolute y[mm]")
     ax1.set_xlabel("absolute x[mm]")
@@ -1149,7 +1205,7 @@ tankselect = TankSelect()
 stepwidthselect = StepWidthSelect(app)
 create_circular_trajectory = CreateCircularTrajectory(app)
 create_kartesian_trajectory = CreateKartesianTrajectory(app)
-next_auto_drive = NextAutoDriveReset(app)
+next_auto_drive = NextAutoDriveResetMeasure(app)
 LOG = Log(app)
 sys.stdout = LOG
 
