@@ -12,6 +12,7 @@ from .com_handling import (
     disconnect_COM_port,
 )
 
+"""
 from .doteit import (
     doteit_in_SingleEitFrame,
     list_eit_files,
@@ -21,6 +22,7 @@ from .doteit import (
     convert_fulldir_doteit_to_pickle,
     convert_fulldir_doteit_to_npz,
 )
+"""
 
 from .setup_m import (
     SystemMessageCallback,
@@ -47,6 +49,8 @@ from .setup_m import (
     GetFirmwareIDs,
 )
 
+from .default_configurations import configuration_01
+
 
 __all__ = [
     # print_command_info
@@ -60,13 +64,13 @@ __all__ = [
     "serial_write",
     "disconnect_COM_port",
     # doteit
-    "doteit_in_SingleEitFrame",
-    "list_eit_files",
-    "list_all_files",
-    "single_eit_in_pickle",
-    "load_pickle_to_dict",
-    "convert_fulldir_doteit_to_pickle",
-    "convert_fulldir_doteit_to_npz",
+    # "doteit_in_SingleEitFrame",
+    # "list_eit_files",
+    # "list_all_files",
+    # "single_eit_in_pickle",
+    # "load_pickle_to_dict",
+    # "convert_fulldir_doteit_to_pickle",
+    # "convert_fulldir_doteit_to_npz",
     # setup_m
     "SystemMessageCallback",
     "SaveSettings",
@@ -90,4 +94,6 @@ __all__ = [
     "GetDevideInfo",
     "TCP_ConnectionWatchdog",
     "GetFirmwareIDs",
+    # default_configurations
+    "configuration_01",
 ]

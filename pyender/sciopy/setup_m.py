@@ -8,7 +8,7 @@ def SystemMessageCallback(serial, prnt_msg: bool = True, ret_hex_int: int = 0):
     serial      ... serial connection
     prnt_msg    ... print out the buffer
     ret_hex_int ... Parameters -> ['none','hex', 'int', 'both']
-    
+
     @v=1.0.3
     """
     msg_dict = {
