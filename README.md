@@ -155,7 +155,7 @@ Installed software:
 - [x] Visual-Studio-Code
 - [x] ScioSpecEIT
 - [x] Sublime Merge
-- [ ] JupyterLab
+- [x] JupyterLab
 - [x] Python3.11
 
 ## Measurement Components
