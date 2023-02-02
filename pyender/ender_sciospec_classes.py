@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import numpy as np
-from typing import Union, List
+from typing import Union
 
 
 @dataclass
