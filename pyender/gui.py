@@ -131,6 +131,7 @@ center_x_y = 180
 center_z = 0
 
 scio_spec_measurement_config = ScioSpecMeasurementConfig(
+    com_port="COM3",
     sample_per_step=10,
     actual_sample=0,
     s_path="tmp_data/",  # TBD: Select savepath with seperate window!
@@ -261,7 +262,7 @@ class ConnectEnder5:
             print("Can not open", self.com_dropdown_ender.get())
 
 
-class ConnectScioSpec:
+class ScioSpecPort:
     def __init__(self, app) -> None:
         self.com_dropdown_sciospec = ttk.Combobox(
             values=detected_com_ports,
@@ -274,63 +275,25 @@ class ConnectScioSpec:
             height=btn_height,
         )
 
-        self.connect_interact_button = Button(
-            app,
-            text="Connect ScioSpec",
-            bg="#FBC86C",
-            state="disabled",
-            command=self.connect_interact,
-        )
-        self.connect_interact_button.place(
-            x=3 * spacer + btn_width,
-            y=2 * spacer + btn_height,
-            width=x_0ff - spacer,
-            height=btn_height,
-        )
-
     def dropdown_callback(self, event=None):
         if event:
-            print("dropdown opened and selected:", self.com_dropdown_sciospec.get())
-            self.connect_interact_button["state"] = "normal"
+            scio_spec_measurement_config.com_port = self.com_dropdown_sciospec.get()
+            print(
+                "dropdown opened and selected:", scio_spec_measurement_config.com_port
+            )
         else:
             pass
-
-    def connect_interact(self):
-        global COM_ScioSpec
-
-        self.connect_interact_button["text"] = "Connecting ..."
-        print("Connection to ", str(self.com_dropdown_sciospec.get()), "established.")
-        try:
-            COM_ScioSpec = serial.Serial(self.com_dropdown_sciospec.get(), 115200)
-            time.sleep(1)
-            self.connect_interact_button["text"] = "Connection established"
-            self.connect_interact_button["bg"] = "green"
-            self.connect_interact_button["fg"] = "black"
-            self.connect_interact_button["state"] = "disabled"
-            self.com_dropdown_sciospec["state"] = "disabled"
-            next_auto_drive.measure_btn["state"] = "normal"
-
-            # TBD: If config is finished uncomment the following part:
-            # scio_spec_config.opnen_cnf_window_btn["state"] = "normal"
-            print("Initialization done.")
-
-            # TBD: Programm new button that allows a selection of the configuration!
-            # configuration_01(COM_ScioSpec)  # tbd in ender gui
-            # SystemMessageCallback(COM_ScioSpec, prnt_msg=False)
-
-        except BaseException:
-            print("Can not open", self.com_dropdown_sciospec.get())
 
 
 class ScioSpecConfig:
     def __init__(self, app) -> None:
         self.opnen_cnf_window_btn = Button(
-            app, text="Open Config", command=self.config_window
+            app, text="ScioSpec Config", command=self.config_window
         )
         self.opnen_cnf_window_btn.place(
-            x=3 * spacer + btn_width + x_0ff,
-            y=1 * spacer + btn_width + spacer,
-            width=2 * btn_width + 2 * spacer,
+            x=3 * spacer + btn_width,
+            y=2 * spacer + btn_height,
+            width=x_0ff - spacer,
             height=btn_height,
         )
 
@@ -353,9 +316,6 @@ class ScioSpecConfig:
             print(scio_spec_measurement_config)
             self.sciospec_cnf_wndow.destroy()
 
-        def set_config():
-            pass
-
         labels = ["Samples per step:", "Save path:", "Object:"]
 
         for i in range(len(labels)):
@@ -374,11 +334,6 @@ class ScioSpecConfig:
             self.sciospec_cnf_wndow, values=object_architectures
         )
         objct_dropdown.grid(row=2, column=1, pady=(0, 5))
-
-        btn_load_cnf = Button(
-            self.sciospec_cnf_wndow, text="Set configuration", command=set_config
-        )
-        btn_load_cnf.grid(row=3, column=1, pady=(0, 5))
 
         btn_set_all = Button(
             self.sciospec_cnf_wndow,
@@ -770,9 +725,10 @@ class CreateCircularTrajectory:
                 (circledrivepattern.abs_y_posis, y)
             )
             circledrivepattern.abs_z_posis = enderstat.abs_z_pos
-        circledrivepattern.n_points += len(x)
+            circledrivepattern.n_points += len(x)
         circledrivepattern.motion_speed = enderstat.motion_speed
         plot(enderstat, circledrivepattern, kartesiandrivepattern)
+        save_cnf_file()
 
 
 class NextAutoDriveResetMeasure:
@@ -821,6 +777,8 @@ class NextAutoDriveResetMeasure:
             enderstat.abs_x_tgt = circledrivepattern.abs_x_posis[0]
             enderstat.abs_y_tgt = circledrivepattern.abs_y_posis[0]
             move_to_absolute_x_y(COM_Ender, enderstat)
+            print("Wait:", calculate_moving_time(enderstat))
+            time.sleep(calculate_moving_time(enderstat))
             circledrivepattern.abs_x_posis = circledrivepattern.abs_x_posis[1:]
             circledrivepattern.abs_y_posis = circledrivepattern.abs_y_posis[1:]
             enderstat.abs_x_pos = enderstat.abs_x_tgt
@@ -833,6 +791,7 @@ class NextAutoDriveResetMeasure:
             enderstat.abs_x_tgt = kartesiandrivepattern.abs_x_posis[0]
             enderstat.abs_y_tgt = kartesiandrivepattern.abs_y_posis[0]
             move_to_absolute_x_y(COM_Ender, enderstat)
+            print("Wait:", calculate_moving_time(enderstat))
             time.sleep(calculate_moving_time(enderstat))
             kartesiandrivepattern.abs_x_posis = kartesiandrivepattern.abs_x_posis[1:]
             kartesiandrivepattern.abs_y_posis = kartesiandrivepattern.abs_y_posis[1:]
@@ -843,7 +802,7 @@ class NextAutoDriveResetMeasure:
         # Measurement:
         single_measurement()
 
-    def reset_trajectory(self):
+    def reset_trajectory(self) -> None:
         circledrivepattern.active = False
         kartesiandrivepattern.active = False
 
@@ -1012,6 +971,7 @@ class CreateKartesianTrajectory:
         kartesiandrivepattern.abs_z_pos = enderstat.abs_z_pos
         kartesiandrivepattern.motion_speed = enderstat.motion_speed
         plot(enderstat, circledrivepattern, kartesiandrivepattern)
+        save_cnf_file()
 
 
 def plot(
@@ -1123,22 +1083,25 @@ def plot(
     plt.close(fig)
 
 
-def single_measurement() -> None:
-    """
-    - KartesianDrivePattern
-    - CircularDrivePattern
-    - ScioSpecMeasurementConfig
-    """
-    print("Save meas_cnf")
-    # Save config:
+def save_cnf_file() -> None:
     with open("meas_cnf.pkl", "wb") as f:
         tmp_conf = [
             scio_spec_measurement_config,
             circledrivepattern,
             kartesiandrivepattern,
+            enderstat,
         ]
         pickle.dump(tmp_conf, f)
-    # call(["python", "run_meas_prototype.py"])
+    print("Saved meas_cnf.pkl")
+
+
+def single_measurement() -> None:
+    """
+    Start measurement script:
+    -> Measurement at the current enderstat position.
+    """
+    save_cnf_file()
+    call(["python", "run_meas_prototype.py"])
 
 
 def action_get_info_dialog():
@@ -1177,7 +1140,7 @@ app.configure(background="#1A5175")
 app.grid()
 
 connect_ender_5 = ConnectEnder5(app)
-# connect_sciospec = ConnectScioSpec(app)
+connect_sciospec = ScioSpecPort(app)
 scio_spec_config = ScioSpecConfig(app)
 movement_xyz = MovementXYZ(app)
 tankselect = TankSelect()

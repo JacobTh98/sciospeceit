@@ -31,6 +31,7 @@ from .setup_m import (
     bytesarray_to_float,
     bytesarray_to_int,
     bytesarray_to_byteslist,
+    parse_to_full_frame,
     reshape_measurement_buffer,
     parse_single_frame,
     SetLED_Mode,
@@ -61,6 +62,7 @@ __all__ = [
     # "convert_fulldir_doteit_to_npz",
     # setup_m
     "SystemMessageCallback",
+    "parse_to_full_frame",
     "StartStopMeasurement",
     "del_hex_in_list",
     "bytesarray_to_float",

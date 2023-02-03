@@ -253,12 +253,12 @@ def GetOutputConfiguration(serial) -> None:
 
 
 def StartStopMeasurement(serial) -> list:
-    print("Starting measurement:")
+    print("Starting measurement.")
     serial.write(bytearray([0xB4, 0x01, 0x01, 0xB4]))
     measurement_data_hex = SystemMessageCallback(
         serial, prnt_msg=False, ret_hex_int="hex"
     )
-    print("Stopping measurement:")
+    print("Stopping measurement.")
     serial.write(bytearray([0xB4, 0x01, 0x00, 0xB4]))
     SystemMessageCallback(serial, prnt_msg=False, ret_hex_int="int")
     return measurement_data_hex
@@ -319,6 +319,17 @@ def parse_single_frame(lst_ele: np.ndarray) -> SingleFrame:
         end_tag=lst_ele[139],
     )
     return sgl_frm
+
+
+def parse_to_full_frame(
+    measurement_data: np.ndarray, burst_count: int = 1
+) -> np.ndarray:
+    """Parses any measured byte representation into the dataclass SingleFrame"""
+    if burst_count == 1:
+        data_frame = []
+        for i, sf in enumerate(measurement_data):
+            data_frame.append(parse_single_frame(sf))
+        return np.array(data_frame)
 
 
 def GetTemperature() -> None:
