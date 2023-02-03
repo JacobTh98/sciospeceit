@@ -34,6 +34,7 @@ from .setup_m import (
     reshape_measurement_buffer,
     parse_single_frame,
     SetLED_Mode,
+    GetFirmwareIDs,
 )
 
 from .default_configurations import configuration_01
@@ -68,6 +69,7 @@ __all__ = [
     "reshape_measurement_buffer",
     "parse_single_frame",
     "SetLED_Mode",
+    "GetFirmwareIDs",
     # default_configurations
     "configuration_01",
 ]
