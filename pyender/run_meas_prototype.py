@@ -13,14 +13,9 @@ from sciopy import (
     configuration_01,
     connect_COM_port,
     StartStopMeasurement,
-    bytesarray_to_float,
-    bytesarray_to_int,
-    bytesarray_to_byteslist,
-    parse_single_frame,
     reshape_measurement_buffer,
     del_hex_in_list,
     parse_to_full_frame,
-    GetFirmwareIDs,
 )
 
 """
@@ -218,8 +213,15 @@ if accessed:
     os.remove("meas_cnf.pkl")
     print("\t->Finished Measurement.")
     COM_ScioSpec.close()
-
+    total_time = time.time() - start_time
     print(
         "--- Runtime measurement script %s seconds ---"
         % np.round(time.time() - start_time, 2)
+    )
+
+    np.savez(
+        f"wrkbnch_data/gui_brstcnt_{scio_spec_measurement_config.sample_per_step}.npz",
+        measurement_data_hex=measurement_data_hex,
+        total_time=total_time,
+        msg_len=len(measurement_data_hex),
     )
