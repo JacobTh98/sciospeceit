@@ -18,41 +18,6 @@ from sciopy import (
     parse_to_full_frame,
 )
 
-"""
-def del_hex_in_list(lst: list) -> list:
-    return [
-        "0" + ele.replace("0x", "") if len(ele) == 1 else ele.replace("0x", "")
-        for ele in lst
-    ]
-
-
-def bytesarray_to_float(bytes_array: np.ndarray) -> float:
-    bytes_array = [int(b, 16) for b in bytes_array]
-    bytes_array = bytes(bytes_array)
-    return struct.unpack("!f", bytes(bytes_array))[0]
-
-
-def bytesarray_to_int(bytes_array: np.ndarray) -> int:
-    bytes_array = bytesarray_to_byteslist(bytes_array)
-    return int.from_bytes(bytes_array, "big")
-
-
-def bytesarray_to_byteslist(bytes_array: np.ndarray) -> list:
-    bytes_array = [int(b, 16) for b in bytes_array]
-    return bytes(bytes_array)
-
-
-def reshape_measurement_buffer(lst: list) -> np.ndarray:
-    idx_b4 = [i for i, ele in enumerate(lst) if ele == "b4"]
-    idx_b4 = np.array(idx_b4)
-    step = abs(idx_b4[1] - idx_b4[0]) + 1
-    return np.array(
-        [lst[i : i + step] for i in range(idx_b4[0], idx_b4[-1] + step, step)],
-        dtype=list,
-    )[:-1]
-
-"""
-
 # def parse_to_full_frame(
 #    measurement_data: np.ndarray, burst_count: int = 1
 # ) -> np.ndarray:
@@ -193,6 +158,16 @@ if accessed:
         measurement_data_hex = StartStopMeasurement(COM_ScioSpec)
         measurement_data = del_hex_in_list(measurement_data_hex)
         measurement_data = reshape_measurement_buffer(measurement_data)
+        """
+        TBD: Insert "reshape_burst_measurement_buffer()".
+            This function is scaleable within the measurement buffer. It returns a list of np.ndarrays.
+            Each element inside this list represents the single buffer feedback of "reshape_measurement_buffer()".
+            It has to be saved for example in a for-loop to save the single measurements in single samples.
+            The advantage is much more speed during the measurement. 
+
+            reshape_burst_measurement_buffer() has also be inserted in the sciopy module too!
+        """
+
         np.savez(
             scio_spec_measurement_config.s_path
             + "sample_{0:06d}.npz".format(
@@ -217,11 +192,4 @@ if accessed:
     print(
         "--- Runtime measurement script %s seconds ---"
         % np.round(time.time() - start_time, 2)
-    )
-
-    np.savez(
-        f"wrkbnch_data/gui_brstcnt_{scio_spec_measurement_config.sample_per_step}.npz",
-        measurement_data_hex=measurement_data_hex,
-        total_time=total_time,
-        msg_len=len(measurement_data_hex),
     )
