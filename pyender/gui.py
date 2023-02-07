@@ -132,7 +132,7 @@ center_z = 0
 
 scio_spec_measurement_config = ScioSpecMeasurementConfig(
     com_port="COM3",
-    sample_per_step=10,
+    burst_count=10,
     actual_sample=0,
     s_path="tmp_data/",  # TBD: Select savepath with seperate window!
     object="circle",
@@ -308,15 +308,13 @@ class ScioSpecConfig:
             )
 
         def set_sciospec_settings():
-            scio_spec_measurement_config.sample_per_step = int(
-                entry_sample_per_step.get()
-            )
+            scio_spec_measurement_config.burst_count = int(entry_sample_per_step.get())
             scio_spec_measurement_config.object = objct_dropdown.get()
             scio_spec_measurement_config.actual_sample = 0
             print(scio_spec_measurement_config)
             self.sciospec_cnf_wndow.destroy()
 
-        labels = ["Samples per step:", "Save path:", "Object:"]
+        labels = ["Burst count:", "Save path:", "Object:"]
 
         for i in range(len(labels)):
             label = Label(self.sciospec_cnf_wndow, text=labels[i])

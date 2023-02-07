@@ -2,7 +2,7 @@
 # from connect import connect_COM_port
 from time import sleep
 import struct
-from typing import Union
+from typing import Union, List
 from .sciopy_dataclasses import SingleFrame  # .
 import numpy as np
 
@@ -264,11 +264,13 @@ def StartStopMeasurement(serial) -> list:
     return measurement_data_hex
 
 
-def del_hex_in_list(lst: list) -> list:
-    return [
-        "0" + ele.replace("0x", "") if len(ele) == 1 else ele.replace("0x", "")
-        for ele in lst
-    ]
+def del_hex_in_list(lst: list) -> np.ndarray:
+    return np.array(
+        [
+            "0" + ele.replace("0x", "") if len(ele) == 1 else ele.replace("0x", "")
+            for ele in lst
+        ]
+    )
 
 
 def bytesarray_to_float(bytes_array: np.ndarray) -> float:
@@ -287,14 +289,35 @@ def bytesarray_to_byteslist(bytes_array: np.ndarray) -> list:
     return bytes(bytes_array)
 
 
-def reshape_measurement_buffer(lst: list) -> np.ndarray:
-    idx_b4 = [i for i, ele in enumerate(lst) if ele == "b4"]
-    idx_b4 = np.array(idx_b4)
-    step = abs(idx_b4[1] - idx_b4[0]) + 1
-    return np.array(
-        [lst[i : i + step] for i in range(idx_b4[0], idx_b4[-1] + step, step)],
-        dtype=list,
-    )[:-1]
+def reduce_burst_to_less_x(
+    brst_cnt: Union[int, list], leq: int = 100
+) -> Union[List[int], int]:
+    """TBD"""
+    if type(brst_cnt) == list and brst_cnt[-1] > leq:
+        rst = brst_cnt[-1] - leq
+        brst_cnt[-1] = leq
+        brst_cnt.append(rst)
+        reduce_burst_to_less_x(brst_cnt, leq)
+    if type(brst_cnt) == int and brst_cnt > leq:
+        brst_cnt = [leq, brst_cnt - leq]
+        reduce_burst_to_less_x(brst_cnt, leq)
+    return brst_cnt
+
+
+reduce_burst_to_less_x(520, 49)
+
+
+def reshape_burst_buffer(lst: np.ndarray, burst_count: int) -> list:
+    """TBD"""
+    full_frame_len, shape_x, shape_y = 17920, 128, 140
+    lst = lst[4:]
+    full_frame = []
+    for burst in range(burst_count):
+        tmp_lst = lst[
+            burst * full_frame_len : (burst + 1) * full_frame_len
+        ]  # Select burst part
+        full_frame.append(tmp_lst.reshape(shape_x, shape_y))
+    return full_frame
 
 
 def parse_single_frame(lst_ele: np.ndarray) -> SingleFrame:
@@ -321,15 +344,12 @@ def parse_single_frame(lst_ele: np.ndarray) -> SingleFrame:
     return sgl_frm
 
 
-def parse_to_full_frame(
-    measurement_data: np.ndarray, burst_count: int = 1
-) -> np.ndarray:
+def parse_to_full_frame(measurement_data: np.ndarray) -> np.ndarray:
     """Parses any measured byte representation into the dataclass SingleFrame"""
-    if burst_count == 1:
-        data_frame = []
-        for i, sf in enumerate(measurement_data):
-            data_frame.append(parse_single_frame(sf))
-        return np.array(data_frame)
+    data_frame = []
+    for i, sf in enumerate(measurement_data):
+        data_frame.append(parse_single_frame(sf))
+    return np.array(data_frame)
 
 
 def GetTemperature() -> None:
