@@ -1,5 +1,5 @@
 matplotlib==3.3.3
 numpy==1.22.3
 pyserial==3.5
-sciopy==0.2.4
+sciopy==0.2.5
 screeninfo==0.8.1
