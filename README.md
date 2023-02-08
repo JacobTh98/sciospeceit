@@ -9,7 +9,7 @@
 - [x] First test measurement
 - [x] Review data
 - [x] Proceed and describe further steps
-- [ ] Write a `sciopy` module to convert .eit data and record data using a serial connection
+- [x] Write a `sciopy` module to convert .eit data and record data using a serial connection
 - [ ] Record first experimental data
 
 ## Repository
@@ -161,8 +161,7 @@ Installed software:
 ## Measurement Components
 
 - [x] Saline
-- [ ] Different object geometries
-- [ ] ...
+- [x] Different object geometries
 
 # Ender 5 - Gcode
 
@@ -170,6 +169,11 @@ Installed software:
 - https://www.cncprofi.eu/images/pdf/Befehle%20G-code%20D5.pdf
 - https://gcode.ws/
 
+# Speed performance regarding the burst count settings
+
+Inside the picture below you can see that it is more useful to set the burst count inside the ScioSpec device instead of a for loop. For very large measurements you can save a lot of time and energy due to higher performance using the burst count function.
+
+![Performance estimation](images/perf_est_ScioSpec_burst_for_/pic_01.png)
 
 # Contributors
 
