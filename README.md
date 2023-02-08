@@ -15,9 +15,8 @@
 ## Repository
 
 ### Clone
- ```
-git clone https://gitlab.elaine.uni-rostock.de/b06/sciospeceit.git
- ```
+    git clone https://gitlab.elaine.uni-rostock.de/b06/sciospeceit.git
+
 
 ### Branches
 
@@ -26,22 +25,28 @@ git clone https://gitlab.elaine.uni-rostock.de/b06/sciospeceit.git
 
 ### Push and Merge from `own_branch` to `main`
 
-```
-git branch backup_branch
-git checkout backup_branch
 
-git branch -d own_branch
-git branch own_branch
-git checkout own_branch
+    git branch backup_branch
+    git checkout backup_branch
 
-git reset main
-git add .
-git commit -a -m "all i wanna say"
-git push origin own_branch
+    git branch -d own_branch
+    git branch own_branch
+    git checkout own_branch
 
-git branch -d backup_branch
+    git reset main
+    git add .
+    git commit -a -m "all i wanna say"
+    git push origin own_branch
 
-```
+    git branch -d backup_branch
+
+### Make the current Git branch a main branch
+
+    git checkout better_branch
+    git merge --strategy=ours --no-commit main
+    git commit -m "all i wanna say."            # add information to the template merge message
+    git checkout main
+    git merge better_branch                     # fast-forward main up to the merge
 
 ## Recommended software
 
@@ -150,7 +155,7 @@ Installed software:
 - [x] Visual-Studio-Code
 - [x] ScioSpecEIT
 - [x] Sublime Merge
-- [ ] JupyterLab
+- [x] JupyterLab
 - [x] Python3.11
 
 ## Measurement Components
