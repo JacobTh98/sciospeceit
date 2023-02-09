@@ -11,6 +11,8 @@ import numpy as np
 from sciopy import (
     SystemMessageCallback,
     configuration_01,
+    configuration_02,
+    configuration_04,
     connect_COM_port,
     StartStopMeasurement,
     reshape_burst_buffer,
@@ -34,10 +36,12 @@ from sciopy import (
 class BaseSettingForEstimation:
     active_channel_groups: np.ndarray
     burst_count: int
+    n_el: int  # TBD -> Insert in reshape
 
 
 @dataclass
 class SingleFrame:
+    # Can be deleted
     start_tag: List[str]
     channel_group: str
     excitation_stgs: List[str]
@@ -119,14 +123,18 @@ if accessed:
     # SystemMessageCallback(COM_ScioSpec)
 
     # Send configuration an read answer
-    configuration_01(COM_ScioSpec)
+    configuration_04(COM_ScioSpec)
     SystemMessageCallback(COM_ScioSpec)
+    scio_spec_measurement_config.burst_count = 5
 
     """
     TBD: Send own configuration
         - [ ] burst count
         - [ ] frequency
     """
+    print("Burst count = 1")
+    COM_ScioSpec.write(bytearray([0xB0, 0x03, 0x02, 0x00, 0x05, 0xB0]))
+    SystemMessageCallback(COM_ScioSpec)
 
     # SET BURST COUNT = scio_spec_measurement_config.burst_count
     # SystemMessageCallback(COM_ScioSpec)
@@ -147,7 +155,7 @@ if accessed:
     # Delete hex in mesured buffer
     measurement_data = del_hex_in_list(measurement_data_hex)
     # Reshape the full mesaurement buffer
-    measurement_data = reshape_burst_buffer(
+    measurement_data = reshape_burst_buffer(  # -> ANZAHL DER MESSENDEN ELEKTRODEN HAT EINFLUSS. Z.B.: 32 Elektroden: 128*140=17920, 16 Elektroden = 128*70=8960
         measurement_data, scio_spec_measurement_config.burst_count
     )
     # Iterate over the list full of single measurements. The len(measurement_data)=burst_count
@@ -156,7 +164,7 @@ if accessed:
             scio_spec_measurement_config.s_path
             + "sample_{0:06d}.npz".format(files_offset),
             config=scio_spec_measurement_config,
-            data=parse_to_full_frame(measurement_data),
+            data=parse_to_full_frame(measurement_data),  # parse_to_full_frame
             enderstat=enderstat,
             circledrivepattern=circledrivepattern,
             kartesiandrivepattern=kartesiandrivepattern,
