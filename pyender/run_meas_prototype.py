@@ -18,6 +18,7 @@ from sciopy import (
     reshape_burst_buffer,
     del_hex_in_list,
     parse_to_full_frame,
+    SetBurstCount,
 )
 
 import numpy as np
@@ -80,17 +81,17 @@ if accessed:
     scio_spec_measurement_config = configuration_04(
         COM_ScioSpec, scio_spec_measurement_config
     )
+    print("\tConfig 2", scio_spec_measurement_config)
 
-    SystemMessageCallback(COM_ScioSpec)
+    SystemMessageCallback(COM_ScioSpec, prnt_msg=False)
 
     """
     TBD: Send own configuration
         - [ ] burst count
         - [ ] frequency
     """
-
-    print("Burst count = 1")
-    COM_ScioSpec.write(bytearray([0xB0, 0x03, 0x02, 0x00, 0x05, 0xB0]))
+    scio_spec_measurement_config.burst_count = 5
+    SetBurstCount(COM_ScioSpec, scio_spec_measurement_config)
     SystemMessageCallback(COM_ScioSpec)
 
     # Measure up to burst count
@@ -98,25 +99,31 @@ if accessed:
     # Delete hex in mesured buffer
     measurement_data = del_hex_in_list(measurement_data_hex)
     # Reshape the full mesaurement buffer. Depending on number of electrodes
+    np.save(
+        scio_spec_measurement_config.s_path + "meas_ele_32_bc_5.npy", measurement_data
+    )
+    # Start insertion: get: Full message buffer. return: shaped and exported information depending on burst count, n_el -> INSERT DATA FROM WORKBENCH
+
     measurement_data = reshape_burst_buffer(
         measurement_data, scio_spec_measurement_config
     )
-    for ele in measurement_data:
-        for bursts in range(scio_spec_measurement_config.burst_count):
-            np.savez(
-                scio_spec_measurement_config.s_path
-                + "sample_{0:06d}.npz".format(files_offset),
-                config=scio_spec_measurement_config,
-                data=parse_to_full_frame(measurement_data[bursts]),
-                enderstat=enderstat,
-                circledrivepattern=circledrivepattern,
-                kartesiandrivepattern=kartesiandrivepattern,
-            )
-            files_offset += 1
-            scio_spec_measurement_config.actual_sample = files_offset
+    print("\tShape measurement_data", len(measurement_data))
+
+    for bursts in range(scio_spec_measurement_config.burst_count):
+        np.savez(
+            scio_spec_measurement_config.s_path
+            + "sample_{0:06d}.npz".format(files_offset),
+            config=scio_spec_measurement_config,
+            data=parse_to_full_frame(measurement_data[bursts]),
+            enderstat=enderstat,
+            circledrivepattern=circledrivepattern,
+            kartesiandrivepattern=kartesiandrivepattern,
+        )
+        files_offset += 1
+        scio_spec_measurement_config.actual_sample = files_offset
 
     SystemMessageCallback(COM_ScioSpec, prnt_msg=False)
-    os.remove("meas_cnf.pkl")
+    # os.remove("meas_cnf.pkl")
     print("\t->Finished Measurement.")
     COM_ScioSpec.close()
     total_time = time.time() - start_time
