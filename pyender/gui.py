@@ -133,6 +133,7 @@ center_z = 0
 scio_spec_measurement_config = ScioSpecMeasurementConfig(
     com_port="COM3",
     burst_count=10,
+    n_el=16,
     actual_sample=0,
     s_path="tmp_data/",  # TBD: Select savepath with seperate window!
     object="circle",
@@ -309,12 +310,13 @@ class ScioSpecConfig:
 
         def set_sciospec_settings():
             scio_spec_measurement_config.burst_count = int(entry_sample_per_step.get())
+            scio_spec_measurement_config.n_el = 16  # TBD Programm Checkbox
             scio_spec_measurement_config.object = objct_dropdown.get()
             scio_spec_measurement_config.actual_sample = 0
             print(scio_spec_measurement_config)
             self.sciospec_cnf_wndow.destroy()
 
-        labels = ["Burst count:", "Save path:", "Object:"]
+        labels = ["Burst count:", "Save path:", "Object:", "Electrodes"]
 
         for i in range(len(labels)):
             label = Label(self.sciospec_cnf_wndow, text=labels[i])
