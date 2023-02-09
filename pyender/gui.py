@@ -610,11 +610,14 @@ class MovementXYZ:
 
     def move_z_up(self):
         enderstat.abs_z_tgt = enderstat.abs_z_pos - manual_step.mm_per_step
-        plot(enderstat)
-        move_to_absolute_z(COM_Ender, enderstat)
-        enderstat.abs_z_pos = enderstat.abs_z_tgt
-        enderstat.abs_z_tgt = None
-        plot(enderstat)
+        if enderstat.abs_z_tgt >= 0:
+            plot(enderstat)
+            move_to_absolute_z(COM_Ender, enderstat)
+            enderstat.abs_z_pos = enderstat.abs_z_tgt
+            enderstat.abs_z_tgt = None
+            plot(enderstat)
+        else:
+            print("\tcollision prevented")
 
     def move_z_down(self):
         enderstat.abs_z_tgt = enderstat.abs_z_pos + manual_step.mm_per_step
@@ -723,7 +726,8 @@ class CreateCircularTrajectory:
                 (circledrivepattern.abs_y_posis, y)
             )
             circledrivepattern.abs_z_posis = enderstat.abs_z_pos
-            circledrivepattern.n_points += len(x)
+            circledrivepattern.n_points = circledrivepattern.n_points + len(x)
+            print("circledrivepattern.n_points", circledrivepattern.n_points)
         circledrivepattern.motion_speed = enderstat.motion_speed
         plot(enderstat, circledrivepattern, kartesiandrivepattern)
         save_cnf_file()
@@ -988,21 +992,21 @@ def plot(
             ax1.add_artist(circle)
         else:
             circle = Circle(
-                (center_x_y, center_x_y), radius=75, color="lightsteelblue", alpha=0.7
+                (center_x_y, center_x_y), radius=100, color="lightsteelblue", alpha=0.7
             )
             ax1.add_artist(circle)
 
     ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".")
     if enderstat.abs_x_tgt is not None or enderstat.abs_y_tgt is not None:
         ax1.scatter(
-            enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*", label="Targets"
+            enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*", s=10, label="Targets"
         )
         ax1.legend()
     if cdp.active is True:
-        ax1.scatter(cdp.abs_x_posis, cdp.abs_y_posis, marker="*", s=10, label="Targets")
+        ax1.scatter(cdp.abs_x_posis, cdp.abs_y_posis, marker="*", s=10)
         ax1.legend()
     if kdp.active is True:
-        ax1.scatter(kdp.abs_x_posis, kdp.abs_y_posis, marker="*", s=10, label="Targets")
+        ax1.scatter(kdp.abs_x_posis, kdp.abs_y_posis, marker="*", s=10)
         ax1.legend()
     ax1.set_ylabel("absolute y[mm]")
     ax1.set_xlabel("absolute x[mm]")
@@ -1019,9 +1023,9 @@ def plot(
         if enderstat.tank_architecture == "medium":
             tank_archtctrs = [
                 Rectangle(
-                    (100, hit_box_tank.z_lim_height - enderstat.abs_z_pos),
-                    width=150,
-                    height=100,
+                    (75, hit_box_tank.z_lim_height - enderstat.abs_z_pos),
+                    width=200,
+                    height=150,
                 )
             ]
             pc = PatchCollection(
@@ -1031,8 +1035,8 @@ def plot(
         if enderstat.tank_architecture == "high":
             tank_archtctrs = [
                 Rectangle(
-                    (100, hit_box_tank.z_lim_height - enderstat.abs_z_pos),
-                    width=150,
+                    (75, hit_box_tank.z_lim_height - enderstat.abs_z_pos),
+                    width=200,
                     height=200,
                 )
             ]
