@@ -12,17 +12,7 @@ from subprocess import call
 from dataclasses import dataclass
 
 # Update in sciopy
-# from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
-@dataclass
-class ScioSpecMeasurementConfig:
-    com_port: str
-    burst_count: int
-    n_el: int
-    channel_group: list
-    actual_sample: int
-    s_path: str
-    object: str
-
+from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
 
 try:
     import serial

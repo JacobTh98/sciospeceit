@@ -13,6 +13,7 @@ from sciopy import (
     configuration_01,
     configuration_02,
     configuration_04,
+    parse_single_frame,
     connect_COM_port,
     StartStopMeasurement,
     reshape_burst_buffer,
@@ -22,23 +23,52 @@ from sciopy import (
 )
 
 import numpy as np
-
+from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
 import pickle
 from typing import Union
 
 from ender_sciospec_classes import CircleDrivePattern, KartesianDrivePattern, Ender5Stat
-from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
 
 
-@dataclass
-class ScioSpecMeasurementConfig:
-    com_port: str
-    burst_count: int
-    n_el: int
-    channel_group: list
-    actual_sample: int
-    s_path: str
-    object: str
+def reshape_full_message_in_bursts(
+    lst: list, cnf: ScioSpecMeasurementConfig
+) -> np.ndarray:
+    """
+    Gets the full message buffer.
+
+    Example:- input: n_el=16 -> lst.shape=(44804) | n_el=32 -> lst.shape=(89604,)
+            - delete acknowledgement message: lst.shape=(4480,0) | lst.shape=(89600,)
+            - split this depending on burst count: split_list.shape=(5, 8960) | split_list.shape=(5, 17920)
+    """
+    split_list = []
+    msg_len = 140
+    # delete acknowledgement message
+    lst = lst[4:]
+    # split in burst count messages
+    split_length = lst.shape[0] // cnf.burst_count
+    for split in range(cnf.burst_count):
+        split_list.append(lst[split * split_length : (split + 1) * split_length])
+    return np.array(split_list)
+
+
+def split_bursts_in_framge(
+    split_list: np.ndarray, cnf: ScioSpecMeasurementConfig
+) -> np.ndarray:
+    """ """
+    msg_len = 140  # Constant
+    frame = []  # Channel group depending frame
+    burst_frame = []  # single burst count frame with channel depending frame
+    subframe_length = split_list.shape[1] // msg_len
+    for bursts in range(cnf.burst_count):  # Iterate over bursts
+        tmp_split_list = np.reshape(split_list[bursts], (subframe_length, msg_len))
+        for subframe in range(subframe_length):
+            parsed_sgl_frame = parse_single_frame(tmp_split_list[subframe])
+            # Select the right channel group data
+            if parsed_sgl_frame.channel_group in cnf.channel_group:
+                frame.append(parsed_sgl_frame)
+        burst_frame.append(frame)
+        frame = []  # Reset channel depending single burst frame
+    return np.array(burst_frame)
 
 
 def split_pickle_to_classes(
@@ -92,8 +122,7 @@ if accessed:
     scio_spec_measurement_config = configuration_04(
         COM_ScioSpec, scio_spec_measurement_config
     )
-    scio_spec_measurement_config.channel_group = [1]
-    print("\tConfig 2", scio_spec_measurement_config)
+    print("\tConfig 4", scio_spec_measurement_config)
 
     SystemMessageCallback(COM_ScioSpec, prnt_msg=False)
 
@@ -111,22 +140,25 @@ if accessed:
     # Delete hex in mesured buffer
     measurement_data = del_hex_in_list(measurement_data_hex)
     # Reshape the full mesaurement buffer. Depending on number of electrodes
-    np.save(
-        scio_spec_measurement_config.s_path + "meas_ele_32_bc_5.npy", measurement_data
-    )
+    # np.save(
+    #    scio_spec_measurement_config.s_path + "meas_ele_32_bc_5.npy", measurement_data
+    # )
     # Start insertion: get: Full message buffer. return: shaped and exported information depending on burst count, n_el -> INSERT DATA FROM WORKBENCH
 
-    measurement_data = reshape_burst_buffer(
+    split_measurement_data = reshape_full_message_in_bursts(
         measurement_data, scio_spec_measurement_config
     )
-    print("\tShape measurement_data", len(measurement_data))
 
-    for bursts in range(scio_spec_measurement_config.burst_count):
+    measurement_data = split_bursts_in_framge(
+        split_measurement_data, scio_spec_measurement_config
+    )
+
+    for bursts in measurement_data:
         np.savez(
             scio_spec_measurement_config.s_path
             + "sample_{0:06d}.npz".format(files_offset),
             config=scio_spec_measurement_config,
-            data=parse_to_full_frame(measurement_data[bursts]),
+            data=bursts,
             enderstat=enderstat,
             circledrivepattern=circledrivepattern,
             kartesiandrivepattern=kartesiandrivepattern,
