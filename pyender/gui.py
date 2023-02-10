@@ -9,9 +9,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from subprocess import call
 
-from dataclasses import dataclass
-
-# Update in sciopy
 from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
 
 try:
