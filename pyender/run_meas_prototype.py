@@ -1,33 +1,26 @@
 import time
-
-start_time = time.time()
-
-from dataclasses import dataclass
-from typing import List
 import os
 import numpy as np
 
+import pickle
+from typing import Union
 
 from sciopy import (
     SystemMessageCallback,
-    configuration_01,
-    configuration_02,
+    #    configuration_01,
+    #    configuration_02,
     configuration_04,
-    parse_single_frame,
     connect_COM_port,
     StartStopMeasurement,
     reshape_full_message_in_bursts,
     del_hex_in_list,
-    SetBurstCount,
     split_bursts_in_frames,
 )
 
-import numpy as np
-from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
-import pickle
-from typing import Union
-
 from ender_sciospec_classes import CircleDrivePattern, KartesianDrivePattern, Ender5Stat
+from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
+
+start_time = time.time()
 
 
 def split_pickle_to_classes(
@@ -90,8 +83,8 @@ if accessed:
         - [ ] burst count
         - [ ] frequency
     """
-    #SetBurstCount(COM_ScioSpec, scio_spec_measurement_config)
-    #SystemMessageCallback(COM_ScioSpec)
+    # SetBurstCount(COM_ScioSpec, scio_spec_measurement_config)
+    # SystemMessageCallback(COM_ScioSpec)
 
     # Measure up to burst count
     measurement_data_hex = StartStopMeasurement(COM_ScioSpec)

@@ -778,7 +778,7 @@ class NextAutoDriveResetMeasure:
         )
 
     def next_trajectory_step(self) -> None:
-        if circledrivepattern.active == True:
+        if circledrivepattern.active is True:
             print(circledrivepattern.actual_point)
             enderstat.abs_x_tgt = circledrivepattern.abs_x_posis[0]
             enderstat.abs_y_tgt = circledrivepattern.abs_y_posis[0]
@@ -792,7 +792,7 @@ class NextAutoDriveResetMeasure:
             plot(enderstat, circledrivepattern, kartesiandrivepattern)
             circledrivepattern.actual_point += 1
 
-        if kartesiandrivepattern.active == True:
+        if kartesiandrivepattern.active is True:
             print(kartesiandrivepattern.actual_point)
             enderstat.abs_x_tgt = kartesiandrivepattern.abs_x_posis[0]
             enderstat.abs_y_tgt = kartesiandrivepattern.abs_y_posis[0]
@@ -825,12 +825,12 @@ class NextAutoDriveResetMeasure:
         self.reset_trajectory_btn["state"] = "disabled"
 
     def auto_trajectory_drive(self) -> None:
-        if circledrivepattern.active == True:
+        if circledrivepattern.active is True:
             while len(circledrivepattern.abs_x_posis) != 0:
                 time.sleep(circledrivepattern.wait_at_pos)
                 self.next_trajectory_step()
                 time.sleep(circledrivepattern.wait_at_pos)
-        if kartesiandrivepattern.active == True:
+        if kartesiandrivepattern.active is True:
             while len(kartesiandrivepattern.abs_x_posis) != 0:
                 time.sleep(kartesiandrivepattern.wait_at_pos)
                 self.next_trajectory_step()
