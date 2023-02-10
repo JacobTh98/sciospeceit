@@ -30,6 +30,17 @@ from ender_sciospec_classes import CircleDrivePattern, KartesianDrivePattern, En
 from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
 
 
+@dataclass
+class ScioSpecMeasurementConfig:
+    com_port: str
+    burst_count: int
+    n_el: int
+    channel_group: list
+    actual_sample: int
+    s_path: str
+    object: str
+
+
 def split_pickle_to_classes(
     pkl_data: list,
 ) -> Union[
@@ -81,6 +92,7 @@ if accessed:
     scio_spec_measurement_config = configuration_04(
         COM_ScioSpec, scio_spec_measurement_config
     )
+    scio_spec_measurement_config.channel_group = [1]
     print("\tConfig 2", scio_spec_measurement_config)
 
     SystemMessageCallback(COM_ScioSpec, prnt_msg=False)

@@ -9,7 +9,20 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from subprocess import call
 
-from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
+from dataclasses import dataclass
+
+# Update in sciopy
+# from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
+@dataclass
+class ScioSpecMeasurementConfig:
+    com_port: str
+    burst_count: int
+    n_el: int
+    channel_group: list
+    actual_sample: int
+    s_path: str
+    object: str
+
 
 try:
     import serial
@@ -130,10 +143,12 @@ step_width = [0.1, 1, 10]
 center_x_y = 180
 center_z = 0
 
+
 scio_spec_measurement_config = ScioSpecMeasurementConfig(
     com_port="COM3",
     burst_count=10,
     n_el=16,
+    channel_group=[1],
     actual_sample=0,
     s_path="tmp_data/",  # TBD: Select savepath with seperate window!
     object="circle",
