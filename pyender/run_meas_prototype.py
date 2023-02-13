@@ -9,12 +9,14 @@ from sciopy import (
     SystemMessageCallback,
     #    configuration_01,
     #    configuration_02,
+    SetBurstCount,
     configuration_04,
     connect_COM_port,
     StartStopMeasurement,
     reshape_full_message_in_bursts,
     del_hex_in_list,
     split_bursts_in_frames,
+    reduce_burst_to_available_parts,
 )
 
 from ender_sciospec_classes import CircleDrivePattern, KartesianDrivePattern, Ender5Stat
@@ -67,57 +69,49 @@ if accessed:
     except ConnectionError:
         print("Cant connect to port.")
 
-    # GetFirmwareIDs(COM_ScioSpec)
-    # SystemMessageCallback(COM_ScioSpec)
-
     # Send configuration an read answer
     scio_spec_measurement_config = configuration_04(
         COM_ScioSpec, scio_spec_measurement_config
     )
     print("\tConfig 4", scio_spec_measurement_config)
-
     SystemMessageCallback(COM_ScioSpec, prnt_msg=False)
 
-    """
-    TBD: Send own configuration
-        - [ ] burst count
-        - [ ] frequency
-    """
-    # SetBurstCount(COM_ScioSpec, scio_spec_measurement_config)
-    # SystemMessageCallback(COM_ScioSpec)
+    for splitted_bursts in reduce_burst_to_available_parts(
+        scio_spec_measurement_config.burst_count
+    ):
+        # Iterate over splittet bursts
+        scio_spec_measurement_config.burst_count = splitted_bursts
 
-    # Measure up to burst count
-    measurement_data_hex = StartStopMeasurement(COM_ScioSpec)
-    # Delete hex in mesured buffer
-    measurement_data = del_hex_in_list(measurement_data_hex)
-    # Reshape the full mesaurement buffer. Depending on number of electrodes
-    # np.save(
-    #    scio_spec_measurement_config.s_path + "meas_ele_32_bc_5.npy", measurement_data
-    # )
-    # Start insertion: get: Full message buffer. return: shaped and exported information depending on burst count, n_el -> INSERT DATA FROM WORKBENCH
+        SetBurstCount(COM_ScioSpec, scio_spec_measurement_config)
+        SystemMessageCallback(COM_ScioSpec)
 
-    split_measurement_data = reshape_full_message_in_bursts(
-        measurement_data, scio_spec_measurement_config
-    )
-
-    measurement_data = split_bursts_in_frames(
-        split_measurement_data, scio_spec_measurement_config
-    )
-
-    for bursts in measurement_data:
-        np.savez(
-            scio_spec_measurement_config.s_path
-            + "sample_{0:06d}.npz".format(files_offset),
-            config=scio_spec_measurement_config,
-            data=bursts,
-            enderstat=enderstat,
-            circledrivepattern=circledrivepattern,
-            kartesiandrivepattern=kartesiandrivepattern,
+        # Measure up to burst count
+        measurement_data_hex = StartStopMeasurement(COM_ScioSpec)
+        # Delete hex in mesured buffer
+        measurement_data = del_hex_in_list(measurement_data_hex)
+        # Reshape the full mesaurement buffer. Depending on number of electrodes
+        split_measurement_data = reshape_full_message_in_bursts(
+            measurement_data, scio_spec_measurement_config
         )
-        files_offset += 1
-        scio_spec_measurement_config.actual_sample = files_offset
+        measurement_data = split_bursts_in_frames(
+            split_measurement_data, scio_spec_measurement_config
+        )
 
-    SystemMessageCallback(COM_ScioSpec, prnt_msg=False)
+        for bursts in measurement_data:
+            np.savez(
+                scio_spec_measurement_config.s_path
+                + "sample_{0:06d}.npz".format(files_offset),
+                config=scio_spec_measurement_config,
+                data=bursts,
+                enderstat=enderstat,
+                circledrivepattern=circledrivepattern,
+                kartesiandrivepattern=kartesiandrivepattern,
+            )
+            files_offset += 1
+            scio_spec_measurement_config.actual_sample = files_offset
+
+        SystemMessageCallback(COM_ScioSpec, prnt_msg=False)
+
     # os.remove("meas_cnf.pkl")
     print("\t->Finished Measurement.")
     COM_ScioSpec.close()

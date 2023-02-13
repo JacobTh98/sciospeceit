@@ -7,6 +7,12 @@ from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from dialogs import (
+    action_get_info_dialog,
+    action_get_info_dialog_kat_traj,
+    action_get_info_dialog_traj,
+)
+
 from subprocess import call
 
 from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
@@ -39,9 +45,10 @@ from tkinter import (
     Scale,
     Text,
     Tk,
-    messagebox,
+    Checkbutton,
     Toplevel,
     filedialog,
+    IntVar,
 )
 
 from ender5control import (
@@ -312,7 +319,7 @@ class ScioSpecConfig:
 
         def set_sciospec_settings():
             scio_spec_measurement_config.burst_count = int(entry_sample_per_step.get())
-            scio_spec_measurement_config.n_el = 16  # TBD Programm Checkbox
+            scio_spec_measurement_config.n_el = int(n_el_dropdown.get())
             scio_spec_measurement_config.object = objct_dropdown.get()
             scio_spec_measurement_config.actual_sample = 0
             print(scio_spec_measurement_config)
@@ -322,27 +329,31 @@ class ScioSpecConfig:
 
         for i in range(len(labels)):
             label = Label(self.sciospec_cnf_wndow, text=labels[i])
-            label.grid(row=i, column=0, pady=(0, 5))
+            label.place(x=0, y=i * btn_width, width=2 * btn_width, height=btn_height)
 
         entry_sample_per_step = Entry(self.sciospec_cnf_wndow)
-        entry_sample_per_step.grid(row=0, column=1, pady=(0, 5))
+        entry_sample_per_step.place(x=2 * btn_width, y=18)
 
         btn_save_path = Button(
             self.sciospec_cnf_wndow, text="Select", command=open_path_select
         )
-        btn_save_path.grid(row=1, column=1, pady=(0, 5))
+        btn_save_path.place(x=2 * btn_width, y=btn_height, height=btn_height)
 
         objct_dropdown = ttk.Combobox(
             self.sciospec_cnf_wndow, values=object_architectures
         )
-        objct_dropdown.grid(row=2, column=1, pady=(0, 5))
+        objct_dropdown.place(x=2 * btn_width, y=2 * btn_height + 18)
+
+        piks = [16, 32, 48, 64]
+        n_el_dropdown = ttk.Combobox(self.sciospec_cnf_wndow, values=piks)
+        n_el_dropdown.place(x=2 * btn_width, y=3 * btn_height + 18)
 
         btn_set_all = Button(
             self.sciospec_cnf_wndow,
             text="Set all selections",
             command=set_sciospec_settings,
         )
-        btn_set_all.grid(row=3, column=2, pady=(0, 5))
+        btn_set_all.place(x=2 * btn_width, y=4 * btn_height, height=btn_height)
 
 
 class TankSelect:
@@ -1108,33 +1119,6 @@ def single_measurement() -> None:
     """
     save_cnf_file()
     call(["python", "run_meas_prototype.py"])
-
-
-def action_get_info_dialog():
-    m_text = "\
-************************\n\
-Autor: Jacob Thönes\n\
-Date: January 2023\n\
-Version: 1.00\n\
-Contct: jacob.thoenes@uni-rostock.de \n\
-************************"
-    messagebox.showinfo(message=m_text, title="Info")
-
-
-def action_get_info_dialog_traj():
-    m_text = "\
-************************\n\
-TBD\n\
-************************"
-    messagebox.showinfo(message=m_text, title="Info")
-
-
-def action_get_info_dialog_kat_traj():
-    m_text = "\
-************************\n\
-TBD\n\
-************************"
-    messagebox.showinfo(message=m_text, title="Info")
 
 
 grid_dict = {"sticky": "we", "ipadx": "10"}
