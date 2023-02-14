@@ -51,7 +51,7 @@ if accessed:
         kartesiandrivepattern,
         enderstat,
     ) = split_pickle_to_classes(meas_cnf)
-
+    override_burst_count = scio_spec_measurement_config.burst_count
     print(
         scio_spec_measurement_config,
         circledrivepattern,
@@ -76,9 +76,14 @@ if accessed:
     print("\tConfig 4", scio_spec_measurement_config)
     SystemMessageCallback(COM_ScioSpec, prnt_msg=False)
 
-    for splitted_bursts in reduce_burst_to_available_parts(
+    scio_spec_measurement_config.burst_count = override_burst_count
+    splittet_burst_count = reduce_burst_to_available_parts(
         scio_spec_measurement_config.burst_count
-    ):
+    )
+    print("Settet burst count:", override_burst_count)
+    print("Splittet in::", splittet_burst_count)
+
+    for splitted_bursts in splittet_burst_count:
         # Iterate over splittet bursts
         scio_spec_measurement_config.burst_count = splitted_bursts
 
