@@ -58,6 +58,9 @@ if accessed:
         kartesiandrivepattern,
         enderstat,
     )
+    # Check if the measurement before was saved:
+    if scio_spec_measurement_config.actual_sample != 0 and len(os.listdir(scio_spec_measurement_config.s_path))==0:
+        print("\tNo data was saved!")
 
     files_offset = len(os.listdir(scio_spec_measurement_config.s_path))
     scio_spec_measurement_config.actual_sample = files_offset
@@ -108,9 +111,9 @@ if accessed:
                 + "sample_{0:06d}.npz".format(files_offset),
                 config=scio_spec_measurement_config,
                 data=bursts,
-                enderstat=enderstat,
-                circledrivepattern=circledrivepattern,
-                kartesiandrivepattern=kartesiandrivepattern,
+                enderstat=enderstat.__dict__,
+                circledrivepattern=circledrivepattern.__dict__,
+                kartesiandrivepattern=kartesiandrivepattern.__dict__,
             )
             files_offset += 1
             scio_spec_measurement_config.actual_sample = files_offset
