@@ -231,7 +231,7 @@ def calculate_moving_time(enderstat: Ender5Stat, tol: int = 1) -> Union[int, flo
     """
     dx = enderstat.abs_x_tgt - enderstat.abs_x_pos
     dy = enderstat.abs_y_tgt - enderstat.abs_y_pos
-    if enderstat.abs_z_tgt == None:
+    if enderstat.abs_z_tgt is None:
         dz = 0
     else:
         dz = enderstat.abs_z_tgt - enderstat.abs_z_pos

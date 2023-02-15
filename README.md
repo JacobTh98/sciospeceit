@@ -10,7 +10,7 @@
 - [x] Review data
 - [x] Proceed and describe further steps
 - [x] Write a `sciopy` module to convert .eit data and record data using a serial connection
-- [ ] Record first experimental data
+- [x] Record first experimental data
 
 ## Repository
 
@@ -52,8 +52,6 @@
 
 - VSC-Code
 - Pythoon
-- C
-- Java
 - ScioSpecEIT
 - JupyterLab
 - SublimeMerge
