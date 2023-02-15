@@ -841,11 +841,13 @@ class NextAutoDriveResetMeasure:
 
     def auto_trajectory_drive(self) -> None:
         if circledrivepattern.active is True:
+            # for i in range(circledrivepattern.n_points) # tqdm
             while len(circledrivepattern.abs_x_posis) != 0:
                 time.sleep(circledrivepattern.wait_at_pos)
                 self.next_trajectory_step()
                 time.sleep(circledrivepattern.wait_at_pos)
         if kartesiandrivepattern.active is True:
+            # for i in range(kartesiandrivepattern.n_points) # tqdm
             while len(kartesiandrivepattern.abs_x_posis) != 0:
                 time.sleep(kartesiandrivepattern.wait_at_pos)
                 self.next_trajectory_step()
@@ -997,6 +999,14 @@ class CreateKartesianTrajectory:
 
 
 def plot(
+    enderstat: Ender5Stat,
+    cdp: CircleDrivePattern = circledrivepattern,
+    kdp: KartesianDrivePattern = kartesiandrivepattern,
+) -> None:
+    pass
+
+
+def plot_1(
     enderstat: Ender5Stat,
     cdp: CircleDrivePattern = circledrivepattern,
     kdp: KartesianDrivePattern = kartesiandrivepattern,
