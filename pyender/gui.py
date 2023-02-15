@@ -1016,17 +1016,17 @@ def plot(
             )
             ax1.add_artist(circle)
 
-    ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".")
+    ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".", label="Currently")
     if enderstat.abs_x_tgt is not None or enderstat.abs_y_tgt is not None:
         ax1.scatter(
             enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*", s=10, label="Targets"
         )
         ax1.legend()
     if cdp.active is True:
-        ax1.scatter(cdp.abs_x_posis, cdp.abs_y_posis, marker="*", s=10)
+        ax1.scatter(cdp.abs_x_posis, cdp.abs_y_posis, marker="*", s=10, label="Targets")
         ax1.legend()
     if kdp.active is True:
-        ax1.scatter(kdp.abs_x_posis, kdp.abs_y_posis, marker="*", s=10)
+        ax1.scatter(kdp.abs_x_posis, kdp.abs_y_posis, marker="*", s=10, label="Targets")
         ax1.legend()
     ax1.set_ylabel("absolute y[mm]")
     ax1.set_xlabel("absolute x[mm]")
@@ -1079,7 +1079,6 @@ def plot(
         color="black",
         label="z-table",
     )
-    ax2.scatter(enderstat.abs_x_pos, 380, marker=".", label="Currently")
     if enderstat.abs_z_tgt is not None:
         ax2.hlines(
             enderstat.abs_z_tgt,
