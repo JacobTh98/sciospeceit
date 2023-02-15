@@ -833,7 +833,7 @@ class NextAutoDriveResetMeasure:
         kartesiandrivepattern.abs_y_posis = []
         kartesiandrivepattern.abs_z_posis = []
         kartesiandrivepattern.n_points = 0
-        
+
         plot(enderstat, circledrivepattern, kartesiandrivepattern)
         self.auto_step_btn["state"] = "disabled"
         self.next_step_btn["state"] = "disabled"
