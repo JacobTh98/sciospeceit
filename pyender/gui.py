@@ -7,6 +7,12 @@ from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from dialogs import (
+    action_get_info_dialog,
+    action_get_info_dialog_kat_traj,
+    action_get_info_dialog_traj,
+)
+
 from subprocess import call
 
 from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
@@ -39,9 +45,10 @@ from tkinter import (
     Scale,
     Text,
     Tk,
-    messagebox,
+    Checkbutton,
     Toplevel,
     filedialog,
+    IntVar,
 )
 
 from ender5control import (
@@ -130,9 +137,12 @@ step_width = [0.1, 1, 10]
 center_x_y = 180
 center_z = 0
 
+
 scio_spec_measurement_config = ScioSpecMeasurementConfig(
     com_port="COM3",
     burst_count=10,
+    n_el=16,
+    channel_group=[1],
     actual_sample=0,
     s_path="tmp_data/",  # TBD: Select savepath with seperate window!
     object="circle",
@@ -309,36 +319,41 @@ class ScioSpecConfig:
 
         def set_sciospec_settings():
             scio_spec_measurement_config.burst_count = int(entry_sample_per_step.get())
+            scio_spec_measurement_config.n_el = int(n_el_dropdown.get())
             scio_spec_measurement_config.object = objct_dropdown.get()
             scio_spec_measurement_config.actual_sample = 0
             print(scio_spec_measurement_config)
             self.sciospec_cnf_wndow.destroy()
 
-        labels = ["Burst count:", "Save path:", "Object:"]
+        labels = ["Burst count:", "Save path:", "Object:", "Electrodes"]
 
         for i in range(len(labels)):
             label = Label(self.sciospec_cnf_wndow, text=labels[i])
-            label.grid(row=i, column=0, pady=(0, 5))
+            label.place(x=0, y=i * btn_width, width=2 * btn_width, height=btn_height)
 
         entry_sample_per_step = Entry(self.sciospec_cnf_wndow)
-        entry_sample_per_step.grid(row=0, column=1, pady=(0, 5))
+        entry_sample_per_step.place(x=2 * btn_width, y=18)
 
         btn_save_path = Button(
             self.sciospec_cnf_wndow, text="Select", command=open_path_select
         )
-        btn_save_path.grid(row=1, column=1, pady=(0, 5))
+        btn_save_path.place(x=2 * btn_width, y=btn_height, height=btn_height)
 
         objct_dropdown = ttk.Combobox(
             self.sciospec_cnf_wndow, values=object_architectures
         )
-        objct_dropdown.grid(row=2, column=1, pady=(0, 5))
+        objct_dropdown.place(x=2 * btn_width, y=2 * btn_height + 18)
+
+        piks = [16, 32, 48, 64]
+        n_el_dropdown = ttk.Combobox(self.sciospec_cnf_wndow, values=piks)
+        n_el_dropdown.place(x=2 * btn_width, y=3 * btn_height + 18)
 
         btn_set_all = Button(
             self.sciospec_cnf_wndow,
             text="Set all selections",
             command=set_sciospec_settings,
         )
-        btn_set_all.grid(row=3, column=2, pady=(0, 5))
+        btn_set_all.place(x=2 * btn_width, y=4 * btn_height, height=btn_height)
 
 
 class TankSelect:
@@ -610,11 +625,14 @@ class MovementXYZ:
 
     def move_z_up(self):
         enderstat.abs_z_tgt = enderstat.abs_z_pos - manual_step.mm_per_step
-        plot(enderstat)
-        move_to_absolute_z(COM_Ender, enderstat)
-        enderstat.abs_z_pos = enderstat.abs_z_tgt
-        enderstat.abs_z_tgt = None
-        plot(enderstat)
+        if enderstat.abs_z_tgt >= 0:
+            plot(enderstat)
+            move_to_absolute_z(COM_Ender, enderstat)
+            enderstat.abs_z_pos = enderstat.abs_z_tgt
+            enderstat.abs_z_tgt = None
+            plot(enderstat)
+        else:
+            print("\tcollision prevented")
 
     def move_z_down(self):
         enderstat.abs_z_tgt = enderstat.abs_z_pos + manual_step.mm_per_step
@@ -715,6 +733,7 @@ class CreateCircularTrajectory:
             circledrivepattern.abs_x_posis = x
             circledrivepattern.abs_y_posis = y
             circledrivepattern.abs_z_posis = enderstat.abs_z_pos
+            circledrivepattern.n_points += len(x)
         else:
             circledrivepattern.abs_x_posis = np.concatenate(
                 (circledrivepattern.abs_x_posis, x)
@@ -723,7 +742,8 @@ class CreateCircularTrajectory:
                 (circledrivepattern.abs_y_posis, y)
             )
             circledrivepattern.abs_z_posis = enderstat.abs_z_pos
-            circledrivepattern.n_points += len(x)
+            circledrivepattern.n_points = circledrivepattern.n_points + len(x)
+            print("circledrivepattern.n_points", circledrivepattern.n_points)
         circledrivepattern.motion_speed = enderstat.motion_speed
         plot(enderstat, circledrivepattern, kartesiandrivepattern)
         save_cnf_file()
@@ -770,7 +790,7 @@ class NextAutoDriveResetMeasure:
         )
 
     def next_trajectory_step(self) -> None:
-        if circledrivepattern.active == True:
+        if circledrivepattern.active is True:
             print(circledrivepattern.actual_point)
             enderstat.abs_x_tgt = circledrivepattern.abs_x_posis[0]
             enderstat.abs_y_tgt = circledrivepattern.abs_y_posis[0]
@@ -784,7 +804,7 @@ class NextAutoDriveResetMeasure:
             plot(enderstat, circledrivepattern, kartesiandrivepattern)
             circledrivepattern.actual_point += 1
 
-        if kartesiandrivepattern.active == True:
+        if kartesiandrivepattern.active is True:
             print(kartesiandrivepattern.actual_point)
             enderstat.abs_x_tgt = kartesiandrivepattern.abs_x_posis[0]
             enderstat.abs_y_tgt = kartesiandrivepattern.abs_y_posis[0]
@@ -804,25 +824,28 @@ class NextAutoDriveResetMeasure:
         circledrivepattern.active = False
         kartesiandrivepattern.active = False
 
-        circledrivepattern.abs_x_posis = np.zeros(1)
-        circledrivepattern.abs_y_posis = np.zeros(1)
-        circledrivepattern.abs_z_posis = np.zeros(1)
+        circledrivepattern.abs_x_posis = []
+        circledrivepattern.abs_y_posis = []
+        circledrivepattern.abs_z_posis = []
+        circledrivepattern.n_points = 0
 
-        kartesiandrivepattern.abs_x_posis = np.zeros(1)
-        kartesiandrivepattern.abs_y_posis = np.zeros(1)
-        kartesiandrivepattern.abs_z_posis = np.zeros(1)
+        kartesiandrivepattern.abs_x_posis = []
+        kartesiandrivepattern.abs_y_posis = []
+        kartesiandrivepattern.abs_z_posis = []
+        kartesiandrivepattern.n_points = 0
+
         plot(enderstat, circledrivepattern, kartesiandrivepattern)
         self.auto_step_btn["state"] = "disabled"
         self.next_step_btn["state"] = "disabled"
         self.reset_trajectory_btn["state"] = "disabled"
 
     def auto_trajectory_drive(self) -> None:
-        if circledrivepattern.active == True:
+        if circledrivepattern.active is True:
             while len(circledrivepattern.abs_x_posis) != 0:
                 time.sleep(circledrivepattern.wait_at_pos)
                 self.next_trajectory_step()
                 time.sleep(circledrivepattern.wait_at_pos)
-        if kartesiandrivepattern.active == True:
+        if kartesiandrivepattern.active is True:
             while len(kartesiandrivepattern.abs_x_posis) != 0:
                 time.sleep(kartesiandrivepattern.wait_at_pos)
                 self.next_trajectory_step()
@@ -966,7 +989,8 @@ class CreateKartesianTrajectory:
         )
         kartesiandrivepattern.abs_x_posis = x
         kartesiandrivepattern.abs_y_posis = y
-        kartesiandrivepattern.abs_z_pos = enderstat.abs_z_pos
+        kartesiandrivepattern.abs_z_posis = enderstat.abs_z_pos
+        kartesiandrivepattern.n_points = len(x)
         kartesiandrivepattern.motion_speed = enderstat.motion_speed
         plot(enderstat, circledrivepattern, kartesiandrivepattern)
         save_cnf_file()
@@ -988,14 +1012,14 @@ def plot(
             ax1.add_artist(circle)
         else:
             circle = Circle(
-                (center_x_y, center_x_y), radius=75, color="lightsteelblue", alpha=0.7
+                (center_x_y, center_x_y), radius=100, color="lightsteelblue", alpha=0.7
             )
             ax1.add_artist(circle)
 
-    ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".")
+    ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".", label="Currently")
     if enderstat.abs_x_tgt is not None or enderstat.abs_y_tgt is not None:
         ax1.scatter(
-            enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*", label="Targets"
+            enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*", s=10, label="Targets"
         )
         ax1.legend()
     if cdp.active is True:
@@ -1019,9 +1043,9 @@ def plot(
         if enderstat.tank_architecture == "medium":
             tank_archtctrs = [
                 Rectangle(
-                    (100, hit_box_tank.z_lim_height - enderstat.abs_z_pos),
-                    width=150,
-                    height=100,
+                    (75, hit_box_tank.z_lim_height - enderstat.abs_z_pos),
+                    width=200,
+                    height=150,
                 )
             ]
             pc = PatchCollection(
@@ -1031,8 +1055,8 @@ def plot(
         if enderstat.tank_architecture == "high":
             tank_archtctrs = [
                 Rectangle(
-                    (100, hit_box_tank.z_lim_height - enderstat.abs_z_pos),
-                    width=150,
+                    (75, hit_box_tank.z_lim_height - enderstat.abs_z_pos),
+                    width=200,
                     height=200,
                 )
             ]
@@ -1055,7 +1079,6 @@ def plot(
         color="black",
         label="z-table",
     )
-    ax2.scatter(enderstat.abs_x_pos, 380, marker=".", label="Currently")
     if enderstat.abs_z_tgt is not None:
         ax2.hlines(
             enderstat.abs_z_tgt,
@@ -1100,33 +1123,6 @@ def single_measurement() -> None:
     """
     save_cnf_file()
     call(["python", "run_meas_prototype.py"])
-
-
-def action_get_info_dialog():
-    m_text = "\
-************************\n\
-Autor: Jacob Thönes\n\
-Date: January 2023\n\
-Version: 1.00\n\
-Contct: jacob.thoenes@uni-rostock.de \n\
-************************"
-    messagebox.showinfo(message=m_text, title="Info")
-
-
-def action_get_info_dialog_traj():
-    m_text = "\
-************************\n\
-TBD\n\
-************************"
-    messagebox.showinfo(message=m_text, title="Info")
-
-
-def action_get_info_dialog_kat_traj():
-    m_text = "\
-************************\n\
-TBD\n\
-************************"
-    messagebox.showinfo(message=m_text, title="Info")
 
 
 grid_dict = {"sticky": "we", "ipadx": "10"}
