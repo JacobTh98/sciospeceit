@@ -733,6 +733,7 @@ class CreateCircularTrajectory:
             circledrivepattern.abs_x_posis = x
             circledrivepattern.abs_y_posis = y
             circledrivepattern.abs_z_posis = enderstat.abs_z_pos
+            circledrivepattern.n_points += len(x)
         else:
             circledrivepattern.abs_x_posis = np.concatenate(
                 (circledrivepattern.abs_x_posis, x)
@@ -823,13 +824,16 @@ class NextAutoDriveResetMeasure:
         circledrivepattern.active = False
         kartesiandrivepattern.active = False
 
-        circledrivepattern.abs_x_posis = np.zeros(1)
-        circledrivepattern.abs_y_posis = np.zeros(1)
-        circledrivepattern.abs_z_posis = np.zeros(1)
+        circledrivepattern.abs_x_posis = []
+        circledrivepattern.abs_y_posis = []
+        circledrivepattern.abs_z_posis = []
+        circledrivepattern.n_points = 0
 
-        kartesiandrivepattern.abs_x_posis = np.zeros(1)
-        kartesiandrivepattern.abs_y_posis = np.zeros(1)
-        kartesiandrivepattern.abs_z_posis = np.zeros(1)
+        kartesiandrivepattern.abs_x_posis = []
+        kartesiandrivepattern.abs_y_posis = []
+        kartesiandrivepattern.abs_z_posis = []
+        kartesiandrivepattern.n_points = 0
+        
         plot(enderstat, circledrivepattern, kartesiandrivepattern)
         self.auto_step_btn["state"] = "disabled"
         self.next_step_btn["state"] = "disabled"
@@ -985,7 +989,8 @@ class CreateKartesianTrajectory:
         )
         kartesiandrivepattern.abs_x_posis = x
         kartesiandrivepattern.abs_y_posis = y
-        kartesiandrivepattern.abs_z_pos = enderstat.abs_z_pos
+        kartesiandrivepattern.abs_z_posis = enderstat.abs_z_pos
+        kartesiandrivepattern.n_points = len(x)
         kartesiandrivepattern.motion_speed = enderstat.motion_speed
         plot(enderstat, circledrivepattern, kartesiandrivepattern)
         save_cnf_file()

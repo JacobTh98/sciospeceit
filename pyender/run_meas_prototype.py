@@ -59,7 +59,10 @@ if accessed:
         enderstat,
     )
     # Check if the measurement before was saved:
-    if scio_spec_measurement_config.actual_sample != 0 and len(os.listdir(scio_spec_measurement_config.s_path))==0:
+    if (
+        scio_spec_measurement_config.actual_sample != 0
+        and len(os.listdir(scio_spec_measurement_config.s_path)) == 0
+    ):
         print("\tNo data was saved!")
 
     files_offset = len(os.listdir(scio_spec_measurement_config.s_path))
