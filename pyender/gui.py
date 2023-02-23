@@ -6,6 +6,7 @@ from matplotlib.patches import Rectangle, Circle
 from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import json
 
 from dialogs import (
     action_get_info_dialog,
@@ -26,6 +27,31 @@ except ImportError:
 import platform
 from screeninfo import get_monitors
 
+from tqdm.contrib.telegram import trange
+
+
+def read_telegram_json(json_path: str = "telegram_config.json") -> dict:
+    """
+    Insert the "token", "chat_id" inside the 'telegram_config.json'
+    and set "state":True for using the telegram progress bar.
+
+    Parameters
+    ----------
+    json_path : str, optional
+        path to configuration file, by default 'telegram_config.json'
+
+    Returns
+    -------
+    dict
+        configuration
+    """
+    conf_file = open(json_path)
+    telegram_config = json.load(conf_file)
+    return telegram_config
+
+
+telegram_config = read_telegram_json(json_path="telegram_config.json")
+
 from ender_sciospec_classes import (
     OperatingSystem,
     Ender5Stat,
@@ -45,10 +71,8 @@ from tkinter import (
     Scale,
     Text,
     Tk,
-    Checkbutton,
     Toplevel,
     filedialog,
-    IntVar,
 )
 
 from ender5control import (
@@ -841,17 +865,35 @@ class NextAutoDriveResetMeasure:
 
     def auto_trajectory_drive(self) -> None:
         if circledrivepattern.active is True:
-            # for i in range(circledrivepattern.n_points) # tqdm
-            while len(circledrivepattern.abs_x_posis) != 0:
-                time.sleep(circledrivepattern.wait_at_pos)
-                self.next_trajectory_step()
-                time.sleep(circledrivepattern.wait_at_pos)
+            if telegram_config["state"]:
+                for _ in trange(
+                    circledrivepattern.n_points,
+                    token=telegram_config["token"],
+                    chat_id=telegram_config["chat_id"],
+                ):
+                    time.sleep(circledrivepattern.wait_at_pos)
+                    self.next_trajectory_step()
+                    time.sleep(circledrivepattern.wait_at_pos)
+            else:
+                while len(circledrivepattern.abs_x_posis) != 0:
+                    time.sleep(circledrivepattern.wait_at_pos)
+                    self.next_trajectory_step()
+                    time.sleep(circledrivepattern.wait_at_pos)
         if kartesiandrivepattern.active is True:
-            # for i in range(kartesiandrivepattern.n_points) # tqdm
-            while len(kartesiandrivepattern.abs_x_posis) != 0:
-                time.sleep(kartesiandrivepattern.wait_at_pos)
-                self.next_trajectory_step()
-                time.sleep(kartesiandrivepattern.wait_at_pos)
+            if telegram_config["state"]:
+                for _ in trange(
+                    kartesiandrivepattern.n_points,
+                    token=telegram_config["token"],
+                    chat_id=telegram_config["chat_id"],
+                ):
+                    time.sleep(kartesiandrivepattern.wait_at_pos)
+                    self.next_trajectory_step()
+                    time.sleep(kartesiandrivepattern.wait_at_pos)
+            else:
+                while len(kartesiandrivepattern.abs_x_posis) != 0:
+                    time.sleep(kartesiandrivepattern.wait_at_pos)
+                    self.next_trajectory_step()
+                    time.sleep(kartesiandrivepattern.wait_at_pos)
 
 
 class CreateKartesianTrajectory:
