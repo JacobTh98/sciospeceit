@@ -1,7 +1,7 @@
 import time
 import os
 import numpy as np
-
+import sys
 import pickle
 from typing import Union
 
@@ -10,21 +10,75 @@ from sciopy import (
     #    configuration_01,
     #    configuration_02,
     SetBurstCount,
-<<<<<<< HEAD
-    configuration_04,
-=======
     configuration_03,
->>>>>>> main
     connect_COM_port,
     StartStopMeasurement,
     reshape_full_message_in_bursts,
     del_hex_in_list,
     split_bursts_in_frames,
     reduce_burst_to_available_parts,
+    SoftwareReset,
 )
 
 from ender_sciospec_classes import CircleDrivePattern, KartesianDrivePattern, Ender5Stat
 from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
+
+
+def check_for_content(
+    measurement_data: np.ndarray,
+    COM_ScioSpec,
+    scio_spec_measurement_config: ScioSpecMeasurementConfig,
+    ch_n: int = 0,
+) -> np.ndarray:
+    """Checks the data for content. If data is available continues measurement, else abort script.
+
+    Parameters
+    ----------
+    measurement_data : np.ndarray
+        measured data content
+    COM_ScioSpec : _type_
+        serial connection
+    scio_spec_measurement_config : ScioSpecMeasurementConfig
+        measurement configuration
+    ch_n : int, optional
+        number function was called, by default 0
+
+    Returns
+    -------
+    np.ndarray
+        measurement data
+    """
+    ch_n = ch_n
+    if len(measurement_data[0]) == 0:
+        if ch_n == 4:
+            sys.exit("ScioSpec devices has crashed.")
+        else:
+            SoftwareReset(COM_ScioSpec)
+            time.sleep(5)
+            COM_ScioSpec = connect_COM_port()
+            scio_spec_measurement_config = configuration_03(
+                COM_ScioSpec, scio_spec_measurement_config
+            )
+            SetBurstCount(COM_ScioSpec, scio_spec_measurement_config)
+            SystemMessageCallback(COM_ScioSpec)
+            # Measure up to burst count
+            measurement_data_hex = StartStopMeasurement(COM_ScioSpec)
+            # Delete hex in mesured buffer
+            measurement_data = del_hex_in_list(measurement_data_hex)
+            # Reshape the full mesaurement buffer. Depending on number of electrodes
+            split_measurement_data = reshape_full_message_in_bursts(
+                measurement_data, scio_spec_measurement_config
+            )
+            measurement_data = split_bursts_in_frames(
+                split_measurement_data, scio_spec_measurement_config
+            )
+            ch_n += 1
+            check_for_content(
+                measurement_data, COM_ScioSpec, scio_spec_measurement_config, ch_n
+            )
+    else:
+        return measurement_data
+
 
 start_time = time.time()
 
@@ -80,11 +134,7 @@ if accessed:
         print("Cant connect to port.")
 
     # Send configuration an read answer
-<<<<<<< HEAD
-    scio_spec_measurement_config = configuration_04(
-=======
     scio_spec_measurement_config = configuration_03(
->>>>>>> main
         COM_ScioSpec, scio_spec_measurement_config
     )
     print("\tConfig 4", scio_spec_measurement_config)
@@ -115,8 +165,11 @@ if accessed:
         measurement_data = split_bursts_in_frames(
             split_measurement_data, scio_spec_measurement_config
         )
+        measurement_data = check_for_content(measurement_data)
 
         for bursts in measurement_data:
+            # Check if burst is zero:
+
             np.savez(
                 scio_spec_measurement_config.s_path
                 + "sample_{0:06d}.npz".format(files_offset),
