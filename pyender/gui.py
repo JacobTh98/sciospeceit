@@ -801,7 +801,7 @@ class NextAutoDriveResetMeasure:
             circledrivepattern.abs_y_posis = circledrivepattern.abs_y_posis[1:]
             enderstat.abs_x_pos = enderstat.abs_x_tgt
             enderstat.abs_y_pos = enderstat.abs_y_tgt
-            plot(enderstat, circledrivepattern, kartesiandrivepattern)
+            # plot(enderstat, circledrivepattern, kartesiandrivepattern)
             circledrivepattern.actual_point += 1
 
         if kartesiandrivepattern.active is True:
@@ -815,7 +815,7 @@ class NextAutoDriveResetMeasure:
             kartesiandrivepattern.abs_y_posis = kartesiandrivepattern.abs_y_posis[1:]
             enderstat.abs_x_pos = enderstat.abs_x_tgt
             enderstat.abs_y_pos = enderstat.abs_y_tgt
-            plot(enderstat, circledrivepattern, kartesiandrivepattern)
+            # plot(enderstat, circledrivepattern, kartesiandrivepattern)
             kartesiandrivepattern.actual_point += 1
         # Measurement:
         single_measurement()
@@ -998,7 +998,7 @@ class CreateKartesianTrajectory:
         save_cnf_file()
 
 
-def plot(
+def plot_empty(
     enderstat: Ender5Stat,
     cdp: CircleDrivePattern = circledrivepattern,
     kdp: KartesianDrivePattern = kartesiandrivepattern,
@@ -1006,7 +1006,7 @@ def plot(
     pass
 
 
-def plot_1(
+def plot(
     enderstat: Ender5Stat,
     cdp: CircleDrivePattern = circledrivepattern,
     kdp: KartesianDrivePattern = kartesiandrivepattern,
