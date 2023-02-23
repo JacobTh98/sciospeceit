@@ -10,7 +10,11 @@ from sciopy import (
     #    configuration_01,
     #    configuration_02,
     SetBurstCount,
+<<<<<<< HEAD
     configuration_04,
+=======
+    configuration_03,
+>>>>>>> main
     connect_COM_port,
     StartStopMeasurement,
     reshape_full_message_in_bursts,
@@ -76,7 +80,11 @@ if accessed:
         print("Cant connect to port.")
 
     # Send configuration an read answer
+<<<<<<< HEAD
     scio_spec_measurement_config = configuration_04(
+=======
+    scio_spec_measurement_config = configuration_03(
+>>>>>>> main
         COM_ScioSpec, scio_spec_measurement_config
     )
     print("\tConfig 4", scio_spec_measurement_config)

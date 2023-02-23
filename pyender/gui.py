@@ -801,7 +801,7 @@ class NextAutoDriveResetMeasure:
             circledrivepattern.abs_y_posis = circledrivepattern.abs_y_posis[1:]
             enderstat.abs_x_pos = enderstat.abs_x_tgt
             enderstat.abs_y_pos = enderstat.abs_y_tgt
-            plot(enderstat, circledrivepattern, kartesiandrivepattern)
+            # plot(enderstat, circledrivepattern, kartesiandrivepattern)
             circledrivepattern.actual_point += 1
 
         if kartesiandrivepattern.active is True:
@@ -815,7 +815,7 @@ class NextAutoDriveResetMeasure:
             kartesiandrivepattern.abs_y_posis = kartesiandrivepattern.abs_y_posis[1:]
             enderstat.abs_x_pos = enderstat.abs_x_tgt
             enderstat.abs_y_pos = enderstat.abs_y_tgt
-            plot(enderstat, circledrivepattern, kartesiandrivepattern)
+            # plot(enderstat, circledrivepattern, kartesiandrivepattern)
             kartesiandrivepattern.actual_point += 1
         # Measurement:
         single_measurement()
@@ -841,11 +841,13 @@ class NextAutoDriveResetMeasure:
 
     def auto_trajectory_drive(self) -> None:
         if circledrivepattern.active is True:
+            # for i in range(circledrivepattern.n_points) # tqdm
             while len(circledrivepattern.abs_x_posis) != 0:
                 time.sleep(circledrivepattern.wait_at_pos)
                 self.next_trajectory_step()
                 time.sleep(circledrivepattern.wait_at_pos)
         if kartesiandrivepattern.active is True:
+            # for i in range(kartesiandrivepattern.n_points) # tqdm
             while len(kartesiandrivepattern.abs_x_posis) != 0:
                 time.sleep(kartesiandrivepattern.wait_at_pos)
                 self.next_trajectory_step()
@@ -994,6 +996,14 @@ class CreateKartesianTrajectory:
         kartesiandrivepattern.motion_speed = enderstat.motion_speed
         plot(enderstat, circledrivepattern, kartesiandrivepattern)
         save_cnf_file()
+
+
+def plot_empty(
+    enderstat: Ender5Stat,
+    cdp: CircleDrivePattern = circledrivepattern,
+    kdp: KartesianDrivePattern = kartesiandrivepattern,
+) -> None:
+    pass
 
 
 def plot(
