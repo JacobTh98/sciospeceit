@@ -6,6 +6,7 @@ from matplotlib.patches import Rectangle, Circle
 from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import json
 
 from dialogs import (
     action_get_info_dialog,
@@ -26,6 +27,34 @@ except ImportError:
 import platform
 from screeninfo import get_monitors
 
+from tqdm.contrib.telegram import trange
+
+
+def read_telegram_json(json_path: str = "telegram_config.json") -> dict:
+    """
+    Insert the "token", "chat_id" inside the 'telegram_config.json'
+    and set "state":True for using the telegram progress bar.
+
+    Parameters
+    ----------
+    json_path : str, optional
+        path to configuration file, by default 'telegram_config.json'
+
+    Returns
+    -------
+    dict
+        configuration
+    """
+    conf_file = open(json_path)
+    telegram_config = json.load(conf_file)
+    return telegram_config
+
+
+try:
+    telegram_config = read_telegram_json(json_path="telegram_config.json")
+except:
+    print("Error 404: No telegram config found")
+
 from ender_sciospec_classes import (
     OperatingSystem,
     Ender5Stat,
@@ -45,10 +74,8 @@ from tkinter import (
     Scale,
     Text,
     Tk,
-    Checkbutton,
     Toplevel,
     filedialog,
-    IntVar,
 )
 
 from ender5control import (
@@ -131,7 +158,9 @@ class Log:
 
 detected_com_ports = available_serial_ports()  # ["COM3", "COM4"]
 tank_architectures = ["select tank", "medium", "high"]
-object_architectures = ["circle", "triangle", "square"]
+object_architectures = ["none","circle", "triangle", "square"]
+object_sizes = [0.1, 0.2, 0.3, 0.4]
+n_el_possibilities = [16, 32, 48, 64]
 step_width = [0.1, 1, 10]
 
 center_x_y = 180
@@ -146,6 +175,7 @@ scio_spec_measurement_config = ScioSpecMeasurementConfig(
     actual_sample=0,
     s_path="tmp_data/",  # TBD: Select savepath with seperate window!
     object="circle",
+    size=0.0,
 )
 
 
@@ -321,11 +351,12 @@ class ScioSpecConfig:
             scio_spec_measurement_config.burst_count = int(entry_sample_per_step.get())
             scio_spec_measurement_config.n_el = int(n_el_dropdown.get())
             scio_spec_measurement_config.object = objct_dropdown.get()
+            scio_spec_measurement_config.size = float(obj_size.get())
             scio_spec_measurement_config.actual_sample = 0
             print(scio_spec_measurement_config)
             self.sciospec_cnf_wndow.destroy()
 
-        labels = ["Burst count:", "Save path:", "Object:", "Electrodes"]
+        labels = ["Burst count:", "Save path:", "Object:", "size", "Electrodes"]
 
         for i in range(len(labels)):
             label = Label(self.sciospec_cnf_wndow, text=labels[i])
@@ -344,16 +375,18 @@ class ScioSpecConfig:
         )
         objct_dropdown.place(x=2 * btn_width, y=2 * btn_height + 18)
 
-        piks = [16, 32, 48, 64]
-        n_el_dropdown = ttk.Combobox(self.sciospec_cnf_wndow, values=piks)
-        n_el_dropdown.place(x=2 * btn_width, y=3 * btn_height + 18)
+        obj_size = ttk.Combobox(self.sciospec_cnf_wndow, values=object_sizes)
+        obj_size.place(x=2 * btn_width, y=3 * btn_height + 18)
+
+        n_el_dropdown = ttk.Combobox(self.sciospec_cnf_wndow, values=n_el_possibilities)
+        n_el_dropdown.place(x=2 * btn_width, y=4 * btn_height + 18)
 
         btn_set_all = Button(
             self.sciospec_cnf_wndow,
             text="Set all selections",
             command=set_sciospec_settings,
         )
-        btn_set_all.place(x=2 * btn_width, y=4 * btn_height, height=btn_height)
+        btn_set_all.place(x=2 * btn_width, y=5 * btn_height, height=btn_height)
 
 
 class TankSelect:
@@ -841,17 +874,35 @@ class NextAutoDriveResetMeasure:
 
     def auto_trajectory_drive(self) -> None:
         if circledrivepattern.active is True:
-            # for i in range(circledrivepattern.n_points) # tqdm
-            while len(circledrivepattern.abs_x_posis) != 0:
-                time.sleep(circledrivepattern.wait_at_pos)
-                self.next_trajectory_step()
-                time.sleep(circledrivepattern.wait_at_pos)
+            if telegram_config["state"]:
+                for _ in trange(
+                    circledrivepattern.n_points,
+                    token=telegram_config["token"],
+                    chat_id=telegram_config["chat_id"],
+                ):
+                    time.sleep(circledrivepattern.wait_at_pos)
+                    self.next_trajectory_step()
+                    time.sleep(circledrivepattern.wait_at_pos)
+            else:
+                while len(circledrivepattern.abs_x_posis) != 0:
+                    time.sleep(circledrivepattern.wait_at_pos)
+                    self.next_trajectory_step()
+                    time.sleep(circledrivepattern.wait_at_pos)
         if kartesiandrivepattern.active is True:
-            # for i in range(kartesiandrivepattern.n_points) # tqdm
-            while len(kartesiandrivepattern.abs_x_posis) != 0:
-                time.sleep(kartesiandrivepattern.wait_at_pos)
-                self.next_trajectory_step()
-                time.sleep(kartesiandrivepattern.wait_at_pos)
+            if telegram_config["state"]:
+                for _ in trange(
+                    kartesiandrivepattern.n_points,
+                    token=telegram_config["token"],
+                    chat_id=telegram_config["chat_id"],
+                ):
+                    time.sleep(kartesiandrivepattern.wait_at_pos)
+                    self.next_trajectory_step()
+                    time.sleep(kartesiandrivepattern.wait_at_pos)
+            else:
+                while len(kartesiandrivepattern.abs_x_posis) != 0:
+                    time.sleep(kartesiandrivepattern.wait_at_pos)
+                    self.next_trajectory_step()
+                    time.sleep(kartesiandrivepattern.wait_at_pos)
 
 
 class CreateKartesianTrajectory:
