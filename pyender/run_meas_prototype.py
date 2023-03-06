@@ -187,8 +187,8 @@ if accessed:
         )
     except ConnectionError:
         print("Cant connect to port.")
-        
-    if files_offset%100 == 0:
+
+    if files_offset % 100 == 0:
         telegram_KI_bot("preventive Reset", telegram_config)
         print("Preventive SoftwareReset")
         SoftwareReset(COM_ScioSpec)
