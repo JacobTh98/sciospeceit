@@ -1,9 +1,12 @@
 import time
 import os
 import numpy as np
-import sys
+
+# import sys
 import pickle
 from typing import Union
+import requests
+import json
 
 from sciopy import (
     SystemMessageCallback,
@@ -22,6 +25,54 @@ from sciopy import (
 
 from ender_sciospec_classes import CircleDrivePattern, KartesianDrivePattern, Ender5Stat
 from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
+
+
+def read_telegram_json(json_path: str = "telegram_config.json") -> dict:
+    """
+    Insert the "token", "chat_id" inside the 'telegram_config.json'
+    and set "state":True for using the telegram progress bar.
+
+    Parameters
+    ----------
+    json_path : str, optional
+        path to configuration file, by default 'telegram_config.json'
+
+    Returns
+    -------
+    dict
+        configuration
+    """
+    conf_file = open(json_path)
+    telegram_config = json.load(conf_file)
+    return telegram_config
+
+
+def telegram_KI_bot(bot_message: str, bot_cnf: dict) -> None:
+    """
+    telegram_KI_bot sends a message string to a configured telegram bot.
+
+    Parameters
+    ----------
+    bot_message : str
+        message to send
+    bot_cnf : dict
+        bot configuration
+    """
+    send_text = (
+        "https://api.telegram.org/bot"
+        + bot_cnf["token"]
+        + "/sendMessage?chat_id="
+        + bot_cnf["chat_id"]
+        + "&parse_mode=Markdown&text="
+        + bot_message
+    )
+    requests.get(send_text)
+
+
+try:
+    telegram_config = read_telegram_json(json_path="telegram_config.json")
+except BaseException:
+    print("Error 404: No telegram config found")
 
 
 def check_for_content(
@@ -48,36 +99,40 @@ def check_for_content(
     np.ndarray
         measurement data
     """
-    ch_n = ch_n
+    # ch_n = ch_n
     if len(measurement_data[0]) == 0:
-        if ch_n == 4:
-            sys.exit("ScioSpec devices has crashed.")
-        else:
-            SoftwareReset(COM_ScioSpec)
-            time.sleep(5)
-            COM_ScioSpec = connect_COM_port()
-            scio_spec_measurement_config = configuration_03(
-                COM_ScioSpec, scio_spec_measurement_config
-            )
-            SetBurstCount(COM_ScioSpec, scio_spec_measurement_config)
-            SystemMessageCallback(COM_ScioSpec)
-            # Measure up to burst count
-            measurement_data_hex = StartStopMeasurement(COM_ScioSpec)
-            # Delete hex in mesured buffer
-            measurement_data = del_hex_in_list(measurement_data_hex)
-            # Reshape the full mesaurement buffer. Depending on number of electrodes
-            split_measurement_data = reshape_full_message_in_bursts(
-                measurement_data, scio_spec_measurement_config
-            )
-            measurement_data = split_bursts_in_frames(
-                split_measurement_data, scio_spec_measurement_config
-            )
-            ch_n += 1
-            check_for_content(
-                measurement_data, COM_ScioSpec, scio_spec_measurement_config, ch_n
-            )
+        telegram_KI_bot("Message is empty", telegram_config)
+        print("empty buffer")
     else:
         return measurement_data
+
+
+# if ch_n == 4:
+#     sys.exit("ScioSpec devices has crashed.")
+# else:
+#     SoftwareReset(COM_ScioSpec)
+#     time.sleep(5)
+#     COM_ScioSpec = connect_COM_port()
+#     scio_spec_measurement_config = configuration_03(
+#         COM_ScioSpec, scio_spec_measurement_config
+#     )
+#     SetBurstCount(COM_ScioSpec, scio_spec_measurement_config)
+#     SystemMessageCallback(COM_ScioSpec)
+#     # Measure up to burst count
+#     measurement_data_hex = StartStopMeasurement(COM_ScioSpec)
+#     # Delete hex in mesured buffer
+#     measurement_data = del_hex_in_list(measurement_data_hex)
+#     # Reshape the full mesaurement buffer. Depending on number of electrodes
+#     split_measurement_data = reshape_full_message_in_bursts(
+#         measurement_data, scio_spec_measurement_config
+#     )
+#     measurement_data = split_bursts_in_frames(
+#         split_measurement_data, scio_spec_measurement_config
+#     )
+#     ch_n += 1
+#     check_for_content(
+#         measurement_data, COM_ScioSpec, scio_spec_measurement_config, ch_n
+#     )
 
 
 start_time = time.time()

@@ -158,7 +158,7 @@ class Log:
 
 detected_com_ports = available_serial_ports()  # ["COM3", "COM4"]
 tank_architectures = ["select tank", "medium", "high"]
-object_architectures = ["none","circle", "triangle", "square"]
+object_architectures = ["none", "circle", "triangle", "square"]
 object_sizes = [0.1, 0.2, 0.3, 0.4]
 n_el_possibilities = [16, 32, 48, 64]
 step_width = [0.1, 1, 10]
