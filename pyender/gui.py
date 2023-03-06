@@ -814,7 +814,7 @@ class NextAutoDriveResetMeasure:
             height=btn_height,
         )
 
-        self.measure_btn = Button(app, text="Measaure", command=single_measurement)
+        self.measure_btn = Button(app, text="Measure", command=single_measurement)
         self.measure_btn.place(
             x=4 * spacer + 5 * btn_width,
             y=y_0ff + 6 * btn_height + 3 * spacer,
