@@ -187,6 +187,14 @@ if accessed:
         )
     except ConnectionError:
         print("Cant connect to port.")
+        
+    if files_offset%100 == 0:
+        telegram_KI_bot("preventive Reset", telegram_config)
+        print("Preventive SoftwareReset")
+        SoftwareReset(COM_ScioSpec)
+        time.sleep(5)
+        COM_ScioSpec = connect_COM_port()
+        SystemMessageCallback(COM_ScioSpec)
 
     # Send configuration an read answer
     scio_spec_measurement_config = configuration_03(
