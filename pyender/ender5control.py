@@ -255,6 +255,8 @@ def read_temperature(ser) -> float:  # TB-checked
     float
         temperature value
     """
-    command(ser, f"M105\r\n")
-    temperature = ser.read()
-    return temperature
+    ser.write(str.encode(f"M105\r\n"))
+    time.sleep(1)
+    line = ser.readline()
+    temp = float(str(line).split("B:")[1].split(" ")[0])
+    return temp

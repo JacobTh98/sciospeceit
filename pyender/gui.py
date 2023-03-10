@@ -364,7 +364,9 @@ class ScioSpecConfig:
             )
             scio_spec_measurement_config.water_lvl = float(entry_water_lvl.get())
 
-            scio_spec_measurement_config.temperature = read_temperature(COM_Ender) # Check this
+            scio_spec_measurement_config.temperature = read_temperature(
+                COM_Ender
+            )  # Check this
 
             scio_spec_measurement_config.actual_sample = 0
             print(scio_spec_measurement_config)
@@ -1217,6 +1219,7 @@ def single_measurement() -> None:
     Start measurement script:
     -> Measurement at the current enderstat position.
     """
+    scio_spec_measurement_config.temperature = read_temperature(COM_Ender)
     save_cnf_file()
     call(["python", "run_meas_prototype.py"])
 
