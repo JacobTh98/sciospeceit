@@ -90,6 +90,7 @@ from ender5control import (
     compute_abs_x_y_from_r_phi,
     compute_abs_x_y_from_x_y,
     calculate_moving_time,
+    read_temperature,  # TBD
 )
 
 """
@@ -176,6 +177,10 @@ scio_spec_measurement_config = ScioSpecMeasurementConfig(
     s_path="tmp_data/",  # TBD: Select savepath with seperate window!
     object="circle",
     size=0.0,
+    material="/",
+    saline_conductivity=0.0,
+    temperature=0.0,
+    water_lvl=0.0,
 )
 
 
@@ -352,6 +357,15 @@ class ScioSpecConfig:
             scio_spec_measurement_config.n_el = int(n_el_dropdown.get())
             scio_spec_measurement_config.object = objct_dropdown.get()
             scio_spec_measurement_config.size = float(obj_size.get())
+
+            scio_spec_measurement_config.material = material_dropdown.get()
+            scio_spec_measurement_config.saline_conductivity = float(
+                entry_sline_cond.get()
+            )
+            scio_spec_measurement_config.water_lvl = float(entry_water_lvl.get())
+
+            scio_spec_measurement_config.temperature = read_temperature(COM_Ender) # Check this
+
             scio_spec_measurement_config.actual_sample = 0
             print(scio_spec_measurement_config)
             self.sciospec_cnf_wndow.destroy()
@@ -365,6 +379,18 @@ class ScioSpecConfig:
         entry_sample_per_step = Entry(self.sciospec_cnf_wndow)
         entry_sample_per_step.place(x=2 * btn_width, y=18)
 
+        label_saline = Label(self.sciospec_cnf_wndow, text="Saline cond.:")
+        label_saline.place(x=6 * btn_width, y=0, width=3 * btn_width, height=btn_height)
+        entry_sline_cond = Entry(self.sciospec_cnf_wndow)
+        entry_sline_cond.place(x=9 * btn_width, y=18)
+
+        entry_water_lvl_label = Label(self.sciospec_cnf_wndow, text="Water lvl [mm]:")
+        entry_water_lvl_label.place(
+            x=6 * btn_width, y=btn_height - 15, width=3 * btn_width, height=btn_height
+        )
+        entry_water_lvl = Entry(self.sciospec_cnf_wndow)
+        entry_water_lvl.place(x=9 * btn_width, y=btn_height)
+
         btn_save_path = Button(
             self.sciospec_cnf_wndow, text="Select", command=open_path_select
         )
@@ -374,6 +400,15 @@ class ScioSpecConfig:
             self.sciospec_cnf_wndow, values=object_architectures
         )
         objct_dropdown.place(x=2 * btn_width, y=2 * btn_height + 18)
+
+        material_dropdown_label = Label(self.sciospec_cnf_wndow, text="Material:")
+        material_dropdown_label.place(
+            x=6 * btn_width, y=2 * btn_height, width=3 * btn_width, height=btn_height
+        )
+        material_dropdown = ttk.Combobox(
+            self.sciospec_cnf_wndow, values=["PLA", "Conductor"]
+        )
+        material_dropdown.place(x=9 * btn_width, y=2 * btn_height + 18)
 
         obj_size = ttk.Combobox(self.sciospec_cnf_wndow, values=object_sizes)
         obj_size.place(x=2 * btn_width, y=3 * btn_height + 18)

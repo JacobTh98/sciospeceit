@@ -102,34 +102,6 @@ def check_for_content(
         return measurement_data
 
 
-# if ch_n == 4:
-#     sys.exit("ScioSpec devices has crashed.")
-# else:
-#     SoftwareReset(COM_ScioSpec)
-#     time.sleep(5)
-#     COM_ScioSpec = connect_COM_port()
-#     scio_spec_measurement_config = conf_n_el_16_adjacent(
-#         COM_ScioSpec, scio_spec_measurement_config
-#     )
-#     SetBurstCount(COM_ScioSpec, scio_spec_measurement_config)
-#     SystemMessageCallback(COM_ScioSpec)
-#     # Measure up to burst count
-#     measurement_data_hex = StartStopMeasurement(COM_ScioSpec)
-#     # Delete hex in mesured buffer
-#     measurement_data = del_hex_in_list(measurement_data_hex)
-#     # Reshape the full mesaurement buffer. Depending on number of electrodes
-#     split_measurement_data = reshape_full_message_in_bursts(
-#         measurement_data, scio_spec_measurement_config
-#     )
-#     measurement_data = split_bursts_in_frames(
-#         split_measurement_data, scio_spec_measurement_config
-#     )
-#     ch_n += 1
-#     check_for_content(
-#         measurement_data, COM_ScioSpec, scio_spec_measurement_config, ch_n
-#     )
-
-
 start_time = time.time()
 
 
@@ -224,8 +196,10 @@ if accessed:
             split_measurement_data, scio_spec_measurement_config
         )
         print(f"\tlen of {len(measurement_data[0])=}.")
-        if len(measurement_data[0]) == 0:
-            telegram_KI_bot("empty measurement->reset", telegram_config)
+
+        reset_num = 0
+        while len(measurement_data[0]) == 0:
+            telegram_KI_bot(f"empty measurement->reset {reset_num}", telegram_config)
             SystemMessageCallback(COM_ScioSpec)
             time.sleep(5)
             SoftwareReset(COM_ScioSpec)
@@ -251,8 +225,7 @@ if accessed:
             measurement_data = split_bursts_in_frames(
                 split_measurement_data, scio_spec_measurement_config
             )
-
-        # measurement_data = check_for_content(measurement_data)
+            reset_num += 1
 
         for bursts in measurement_data:
             # Check if burst is zero:

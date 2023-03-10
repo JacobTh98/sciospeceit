@@ -239,3 +239,22 @@ def calculate_moving_time(enderstat: Ender5Stat, tol: int = 1) -> Union[int, flo
     print("")
     v = enderstat.motion_speed / 60.0
     return np.round(s / v + tol, 2)
+
+
+def read_temperature(ser) -> float:  # TB-checked
+    """
+    Read the bed temperature of the Ender 5
+
+    Parameters
+    ----------
+    ser : _type_
+        serial connection
+
+    Returns
+    -------
+    float
+        temperature value
+    """
+    command(ser, f"M105\r\n")
+    temperature = ser.read()
+    return temperature
