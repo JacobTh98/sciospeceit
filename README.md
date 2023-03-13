@@ -1,6 +1,5 @@
 <img src="https://gitlab.elaine.uni-rostock.de/b06/sciospeceit/-/raw/jac_dev/images/ico/logo_width.png">
 
-# ScioSpecEIT
 ## Schedule
 
 - [x] Set up measurement environment
