@@ -52,7 +52,7 @@ def read_telegram_json(json_path: str = "telegram_config.json") -> dict:
 
 try:
     telegram_config = read_telegram_json(json_path="telegram_config.json")
-except:
+except BaseException:
     print("Error 404: No telegram config found")
 
 from ender_sciospec_classes import (
@@ -181,6 +181,7 @@ scio_spec_measurement_config = ScioSpecMeasurementConfig(
     saline_conductivity=0.0,
     temperature=0.0,
     water_lvl=0.0,
+    exc_freq=10000.0,
 )
 
 
@@ -363,7 +364,7 @@ class ScioSpecConfig:
                 entry_sline_cond.get()
             )
             scio_spec_measurement_config.water_lvl = float(entry_water_lvl.get())
-
+            scio_spec_measurement_config.exc_freq = float(etry_exc_freq.get())
             scio_spec_measurement_config.temperature = read_temperature(
                 COM_Ender
             )  # Check this
@@ -372,26 +373,49 @@ class ScioSpecConfig:
             print(scio_spec_measurement_config)
             self.sciospec_cnf_wndow.destroy()
 
-        labels = ["Burst count:", "Save path:", "Object:", "size", "Electrodes"]
+        labels = ["Burst count:", "Save path:", "Object:", "size:", "Electrodes:"]
 
         for i in range(len(labels)):
-            label = Label(self.sciospec_cnf_wndow, text=labels[i])
+            label = Label(self.sciospec_cnf_wndow, text=labels[i], anchor="w")
             label.place(x=0, y=i * btn_width, width=2 * btn_width, height=btn_height)
 
         entry_sample_per_step = Entry(self.sciospec_cnf_wndow)
-        entry_sample_per_step.place(x=2 * btn_width, y=18)
+        entry_sample_per_step.place(x=2 * btn_width, y=18, width=4 * btn_width)
+        entry_sample_per_step.insert(0, "10")
 
-        label_saline = Label(self.sciospec_cnf_wndow, text="Saline cond.:")
-        label_saline.place(x=6 * btn_width, y=0, width=3 * btn_width, height=btn_height)
+        label_saline = Label(self.sciospec_cnf_wndow, text="Saline cond.:", anchor="w")
+        label_saline.place(
+            x=7 * btn_width + spacer, y=0, width=3 * btn_width, height=btn_height
+        )
         entry_sline_cond = Entry(self.sciospec_cnf_wndow)
-        entry_sline_cond.place(x=9 * btn_width, y=18)
+        entry_sline_cond.place(x=11 * btn_width, y=18)
+        entry_sline_cond.insert(0, "0.0")
 
-        entry_water_lvl_label = Label(self.sciospec_cnf_wndow, text="Water lvl [mm]:")
+        entry_water_lvl_label = Label(
+            self.sciospec_cnf_wndow, text="Water lvl [mm]:", anchor="w"
+        )
         entry_water_lvl_label.place(
-            x=6 * btn_width, y=btn_height - 15, width=3 * btn_width, height=btn_height
+            x=7 * btn_width + spacer,
+            y=btn_height - 15,
+            width=3 * btn_width,
+            height=btn_height,
         )
         entry_water_lvl = Entry(self.sciospec_cnf_wndow)
-        entry_water_lvl.place(x=9 * btn_width, y=btn_height)
+        entry_water_lvl.place(x=11 * btn_width, y=btn_height)
+
+        etry_exc_freq_label = Label(
+            self.sciospec_cnf_wndow, text="Excitation freq. [HZ]:", anchor="w"
+        )
+        etry_exc_freq_label.place(
+            x=7 * btn_width + spacer,
+            y=2 * btn_height,
+            width=3 * btn_width + spacer,
+            height=btn_height,
+        )
+
+        etry_exc_freq = Entry(self.sciospec_cnf_wndow)
+        etry_exc_freq.place(x=11 * btn_width, y=2 * btn_height + 9)
+        etry_exc_freq.insert(0, "10000")
 
         btn_save_path = Button(
             self.sciospec_cnf_wndow, text="Select", command=open_path_select
@@ -401,22 +425,33 @@ class ScioSpecConfig:
         objct_dropdown = ttk.Combobox(
             self.sciospec_cnf_wndow, values=object_architectures
         )
-        objct_dropdown.place(x=2 * btn_width, y=2 * btn_height + 18)
+        objct_dropdown.place(
+            x=2 * btn_width, y=2 * btn_height + 18, width=4 * btn_width
+        )
 
-        material_dropdown_label = Label(self.sciospec_cnf_wndow, text="Material:")
+        material_dropdown_label = Label(
+            self.sciospec_cnf_wndow, text="Material:", anchor="w"
+        )
         material_dropdown_label.place(
-            x=6 * btn_width, y=2 * btn_height, width=3 * btn_width, height=btn_height
+            x=7 * btn_width + spacer,
+            y=3 * btn_height,
+            width=3 * btn_width,
+            height=btn_height,
         )
         material_dropdown = ttk.Combobox(
             self.sciospec_cnf_wndow, values=["PLA", "Conductor"]
         )
-        material_dropdown.place(x=9 * btn_width, y=2 * btn_height + 18)
+        material_dropdown.place(
+            x=11 * btn_width, y=3 * btn_height + 18, width=4 * btn_width
+        )
+        material_dropdown.current(0)
 
         obj_size = ttk.Combobox(self.sciospec_cnf_wndow, values=object_sizes)
-        obj_size.place(x=2 * btn_width, y=3 * btn_height + 18)
+        obj_size.place(x=2 * btn_width, y=3 * btn_height + 18, width=4 * btn_width)
 
         n_el_dropdown = ttk.Combobox(self.sciospec_cnf_wndow, values=n_el_possibilities)
-        n_el_dropdown.place(x=2 * btn_width, y=4 * btn_height + 18)
+        n_el_dropdown.place(x=2 * btn_width, y=4 * btn_height + 18, width=4 * btn_width)
+        n_el_dropdown.current(0)
 
         btn_set_all = Button(
             self.sciospec_cnf_wndow,
@@ -793,9 +828,7 @@ class CreateCircularTrajectory:
         next_auto_drive.reset_trajectory_btn["state"] = "normal"
 
         circledrivepattern.active = True
-        circledrivepattern.wait_at_pos = (
-            1  # TBD: Is 1 enough? Compute it from "ScioSpecMeasurementConfig"?
-        )
+        circledrivepattern.wait_at_pos = 1
         x, y = compute_abs_x_y_from_r_phi(
             circledrivepattern.radius, circledrivepattern.phi_steps
         )
