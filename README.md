@@ -1,4 +1,4 @@
-<img src="https://gitlab.elaine.uni-rostock.de/b06/sciospeceit/-/raw/jac_dev/images/ico/ico_sciopy.ico" width="50" height="50">
+<img src="https://gitlab.elaine.uni-rostock.de/b06/sciospeceit/-/raw/jac_dev/images/ico/logo_width.png">
 
 # ScioSpecEIT
 ## Schedule
