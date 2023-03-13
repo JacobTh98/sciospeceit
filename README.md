@@ -1,7 +1,6 @@
+<img src="images/ico/ico_sciopy.ico" width="50" height="50">
+
 # ScioSpecEIT
-
-## Description
-
 ## Schedule
 
 - [x] Set up measurement environment
