@@ -383,13 +383,20 @@ class ScioSpecConfig:
         entry_sample_per_step.place(x=2 * btn_width, y=18, width=4 * btn_width)
         entry_sample_per_step.insert(0, "10")
 
-        label_saline = Label(self.sciospec_cnf_wndow, text="Saline cond.:", anchor="w")
+        label_saline = Label(
+            self.sciospec_cnf_wndow, text="Saline conductivity:", anchor="w"
+        )
         label_saline.place(
             x=7 * btn_width + spacer, y=0, width=3 * btn_width, height=btn_height
         )
+
         entry_sline_cond = Entry(self.sciospec_cnf_wndow)
-        entry_sline_cond.place(x=11 * btn_width, y=18)
+        entry_sline_cond.place(x=11 * btn_width, y=18, width=2 * btn_width)
         entry_sline_cond.insert(0, "0.0")
+
+        saline_unit = ttk.Combobox(self.sciospec_cnf_wndow, values=["S", "mS", "µS"])
+        saline_unit.place(x=13 * btn_width, y=18, width=btn_width)
+        saline_unit.current(1)
 
         entry_water_lvl_label = Label(
             self.sciospec_cnf_wndow, text="Water lvl [mm]:", anchor="w"
@@ -401,7 +408,7 @@ class ScioSpecConfig:
             height=btn_height,
         )
         entry_water_lvl = Entry(self.sciospec_cnf_wndow)
-        entry_water_lvl.place(x=11 * btn_width, y=btn_height)
+        entry_water_lvl.place(x=11 * btn_width, y=btn_height, width=2 * btn_width)
 
         etry_exc_freq_label = Label(
             self.sciospec_cnf_wndow, text="Excitation freq. [HZ]:", anchor="w"
@@ -414,7 +421,7 @@ class ScioSpecConfig:
         )
 
         etry_exc_freq = Entry(self.sciospec_cnf_wndow)
-        etry_exc_freq.place(x=11 * btn_width, y=2 * btn_height + 9)
+        etry_exc_freq.place(x=11 * btn_width, y=2 * btn_height + 9, width=2 * btn_width)
         etry_exc_freq.insert(0, "10000")
 
         btn_save_path = Button(
@@ -425,6 +432,7 @@ class ScioSpecConfig:
         objct_dropdown = ttk.Combobox(
             self.sciospec_cnf_wndow, values=object_architectures
         )
+        objct_dropdown.current(0)
         objct_dropdown.place(
             x=2 * btn_width, y=2 * btn_height + 18, width=4 * btn_width
         )
@@ -442,7 +450,7 @@ class ScioSpecConfig:
             self.sciospec_cnf_wndow, values=["PLA", "Conductor"]
         )
         material_dropdown.place(
-            x=11 * btn_width, y=3 * btn_height + 18, width=4 * btn_width
+            x=11 * btn_width, y=3 * btn_height + 18, width=2 * btn_width
         )
         material_dropdown.current(0)
 
