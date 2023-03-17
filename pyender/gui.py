@@ -145,9 +145,7 @@ class Log:
         self.log = Text(app, height=10, width=100)
         self.log.place(x=10, y=590, width=500, height=200)
 
-        self.clear_button = Button(
-            app, text="Clear Log", command=self.clear_log
-        )
+        self.clear_button = Button(app, text="Clear Log", command=self.clear_log)
         self.clear_button.place(x=520, y=740, height=50, width=150)
 
     def write(self, text):
@@ -250,9 +248,7 @@ class ConnectEnder5:
 
     def __init__(self, app) -> None:
         self.com_dropdown_ender = ttk.Combobox(values=detected_com_ports)
-        self.com_dropdown_ender.bind(
-            "<<ComboboxSelected>>", self.dropdown_callback
-        )
+        self.com_dropdown_ender.bind("<<ComboboxSelected>>", self.dropdown_callback)
         self.com_dropdown_ender.place(
             x=spacer, y=spacer, width=btn_width + spacer, height=btn_height
         )
@@ -273,9 +269,7 @@ class ConnectEnder5:
 
     def dropdown_callback(self, event=None):
         if event:
-            print(
-                "dropdown opened and selected:", self.com_dropdown_ender.get()
-            )
+            print("dropdown opened and selected:", self.com_dropdown_ender.get())
             self.connect_interact_button["state"] = "normal"
         else:
             pass
@@ -327,9 +321,7 @@ class ScioSpecPort:
         self.com_dropdown_sciospec = ttk.Combobox(
             values=detected_com_ports,
         )
-        self.com_dropdown_sciospec.bind(
-            "<<ComboboxSelected>>", self.dropdown_callback
-        )
+        self.com_dropdown_sciospec.bind("<<ComboboxSelected>>", self.dropdown_callback)
         self.com_dropdown_sciospec.place(
             x=spacer,
             y=2 * spacer + btn_height,
@@ -339,9 +331,7 @@ class ScioSpecPort:
 
     def dropdown_callback(self, event=None):
         if event:
-            scio_spec_measurement_config.com_port = (
-                self.com_dropdown_sciospec.get()
-            )
+            scio_spec_measurement_config.com_port = self.com_dropdown_sciospec.get()
             print(
                 "dropdown opened and selected:",
                 scio_spec_measurement_config.com_port,
@@ -373,20 +363,17 @@ class ScioSpecConfig:
             )
 
         def set_sciospec_settings():
-            scio_spec_measurement_config.burst_count = int(
-                entry_sample_per_step.get()
-            )
+            scio_spec_measurement_config.burst_count = int(entry_sample_per_step.get())
             scio_spec_measurement_config.n_el = int(n_el_dropdown.get())
             scio_spec_measurement_config.object = objct_dropdown.get()
             scio_spec_measurement_config.size = float(obj_size.get())
 
             scio_spec_measurement_config.material = material_dropdown.get()
-            scio_spec_measurement_config.saline_conductivity = float(
-                entry_sline_cond.get(), str(saline_unit.get())
+            scio_spec_measurement_config.saline_conductivity = (
+                float(entry_sline_cond.get()),
+                str(saline_unit.get()),
             )
-            scio_spec_measurement_config.water_lvl = float(
-                entry_water_lvl.get()
-            )
+            scio_spec_measurement_config.water_lvl = float(entry_water_lvl.get())
             scio_spec_measurement_config.exc_freq = float(etry_exc_freq.get())
             scio_spec_measurement_config.temperature = read_temperature(
                 COM_Ender
@@ -406,9 +393,7 @@ class ScioSpecConfig:
 
         for i in range(len(labels)):
             label = Label(self.sciospec_cnf_wndow, text=labels[i], anchor="w")
-            label.place(
-                x=0, y=i * btn_width, width=2 * btn_width, height=btn_height
-            )
+            label.place(x=0, y=i * btn_width, width=2 * btn_width, height=btn_height)
 
         entry_sample_per_step = Entry(self.sciospec_cnf_wndow)
         entry_sample_per_step.place(x=2 * btn_width, y=18, width=4 * btn_width)
@@ -428,9 +413,7 @@ class ScioSpecConfig:
         entry_sline_cond.place(x=11 * btn_width, y=18, width=2 * btn_width)
         entry_sline_cond.insert(0, "0.0")
 
-        saline_unit = ttk.Combobox(
-            self.sciospec_cnf_wndow, values=["S", "mS", "µS"]
-        )
+        saline_unit = ttk.Combobox(self.sciospec_cnf_wndow, values=["S", "mS", "µS"])
         saline_unit.place(x=13 * btn_width, y=18, width=btn_width)
         saline_unit.current(1)
 
@@ -444,9 +427,7 @@ class ScioSpecConfig:
             height=btn_height,
         )
         entry_water_lvl = Entry(self.sciospec_cnf_wndow)
-        entry_water_lvl.place(
-            x=11 * btn_width, y=btn_height, width=2 * btn_width
-        )
+        entry_water_lvl.place(x=11 * btn_width, y=btn_height, width=2 * btn_width)
 
         etry_exc_freq_label = Label(
             self.sciospec_cnf_wndow, text="Excitation freq. [HZ]:", anchor="w"
@@ -459,9 +440,7 @@ class ScioSpecConfig:
         )
 
         etry_exc_freq = Entry(self.sciospec_cnf_wndow)
-        etry_exc_freq.place(
-            x=11 * btn_width, y=2 * btn_height + 9, width=2 * btn_width
-        )
+        etry_exc_freq.place(x=11 * btn_width, y=2 * btn_height + 9, width=2 * btn_width)
         etry_exc_freq.insert(0, "10000")
 
         btn_save_path = Button(
@@ -495,16 +474,10 @@ class ScioSpecConfig:
         material_dropdown.current(0)
 
         obj_size = ttk.Combobox(self.sciospec_cnf_wndow, values=object_sizes)
-        obj_size.place(
-            x=2 * btn_width, y=3 * btn_height + 18, width=4 * btn_width
-        )
+        obj_size.place(x=2 * btn_width, y=3 * btn_height + 18, width=4 * btn_width)
 
-        n_el_dropdown = ttk.Combobox(
-            self.sciospec_cnf_wndow, values=n_el_possibilities
-        )
-        n_el_dropdown.place(
-            x=2 * btn_width, y=4 * btn_height + 18, width=4 * btn_width
-        )
+        n_el_dropdown = ttk.Combobox(self.sciospec_cnf_wndow, values=n_el_possibilities)
+        n_el_dropdown.place(x=2 * btn_width, y=4 * btn_height + 18, width=4 * btn_width)
         n_el_dropdown.current(0)
 
         btn_set_all = Button(
@@ -555,9 +528,7 @@ class StepWidthSelect:
     def __init__(self, app) -> None:
         self.stp_wdth_dropdown = ttk.Combobox(values=step_width)
         self.stp_wdth_dropdown.current(2)
-        self.stp_wdth_dropdown.bind(
-            "<<ComboboxSelected>>", self.dropdown_callback
-        )
+        self.stp_wdth_dropdown.bind("<<ComboboxSelected>>", self.dropdown_callback)
         self.stp_wdth_dropdown.place(
             x=x_0ff + 4 * btn_width + 3 * spacer,
             y=spacer,
@@ -583,9 +554,7 @@ class StepWidthSelect:
 class MovementXYZ:
     def __init__(self, app) -> None:
         self.x_set_btn = Button(app, text="Set x=", command=self.set_x)
-        self.x_set_btn.place(
-            x=spacer, y=y_0ff, width=btn_width, height=btn_height
-        )
+        self.x_set_btn.place(x=spacer, y=y_0ff, width=btn_width, height=btn_height)
         self.x_set_entry = Entry(app)
         self.x_set_entry.place(
             x=2 * spacer + btn_width,
@@ -658,9 +627,7 @@ class MovementXYZ:
             height=btn_height,
         )
 
-        self.x_y_center_btn = Button(
-            app, text="center\nx,y", command=self.x_y_center
-        )
+        self.x_y_center_btn = Button(app, text="center\nx,y", command=self.x_y_center)
         self.x_y_center_btn.place(
             x=x_0ff + btn_width + spacer,
             y=y_0ff + spacer + btn_height,
@@ -692,9 +659,7 @@ class MovementXYZ:
             height=btn_height,
         )
 
-        self.z_center_btn = Button(
-            app, text="center\nz", command=self.z_center
-        )
+        self.z_center_btn = Button(app, text="center\nz", command=self.z_center)
         self.z_center_btn.place(
             x=x_0ff + 4 * btn_width + spacer,
             y=y_0ff + spacer + btn_height,
@@ -725,9 +690,7 @@ class MovementXYZ:
             height=3 * btn_height + 2 * spacer,
             width=2 * btn_width,
         )
-        self.motion_speed_label = Label(
-            app, text="M\no\nt\ni\no\nn\n\ns\np\ne\ne\nd"
-        )
+        self.motion_speed_label = Label(app, text="M\no\nt\ni\no\nn\n\ns\np\ne\ne\nd")
         self.motion_speed_label.place(
             x=x_0ff + 7 * btn_width + 2 * spacer,
             y=y_0ff,
@@ -832,9 +795,7 @@ class MovementXYZ:
 
     def motion_speed_callback(self, event):
         enderstat.motion_speed = float(self.motion_speed.get())
-        print(
-            "Set motion speed to", float(self.motion_speed.get()), "[mm/min]"
-        )
+        print("Set motion speed to", float(self.motion_speed.get()), "[mm/min]")
 
 
 class CreateCircularTrajectory:
@@ -967,9 +928,7 @@ class NextAutoDriveResetMeasure:
             height=btn_height,
         )
 
-        self.measure_btn = Button(
-            app, text="Measure", command=single_measurement
-        )
+        self.measure_btn = Button(app, text="Measure", command=single_measurement)
         self.measure_btn.place(
             x=4 * spacer + 5 * btn_width,
             y=y_0ff + 6 * btn_height + 3 * spacer,
@@ -999,12 +958,8 @@ class NextAutoDriveResetMeasure:
             move_to_absolute_x_y(COM_Ender, enderstat)
             print("Wait:", calculate_moving_time(enderstat))
             time.sleep(calculate_moving_time(enderstat))
-            kartesiandrivepattern.abs_x_posis = (
-                kartesiandrivepattern.abs_x_posis[1:]
-            )
-            kartesiandrivepattern.abs_y_posis = (
-                kartesiandrivepattern.abs_y_posis[1:]
-            )
+            kartesiandrivepattern.abs_x_posis = kartesiandrivepattern.abs_x_posis[1:]
+            kartesiandrivepattern.abs_y_posis = kartesiandrivepattern.abs_y_posis[1:]
             enderstat.abs_x_pos = enderstat.abs_x_tgt
             enderstat.abs_y_pos = enderstat.abs_y_tgt
             # plot(enderstat, circledrivepattern, kartesiandrivepattern)
@@ -1242,9 +1197,7 @@ def plot(
             )
             ax1.add_artist(circle)
 
-    ax1.scatter(
-        enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".", label="Currently"
-    )
+    ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".", label="Currently")
     if enderstat.abs_x_tgt is not None or enderstat.abs_y_tgt is not None:
         ax1.scatter(
             enderstat.abs_x_tgt,
@@ -1255,14 +1208,10 @@ def plot(
         )
         ax1.legend()
     if cdp.active is True:
-        ax1.scatter(
-            cdp.abs_x_posis, cdp.abs_y_posis, marker="*", s=10, label="Targets"
-        )
+        ax1.scatter(cdp.abs_x_posis, cdp.abs_y_posis, marker="*", s=10, label="Targets")
         ax1.legend()
     if kdp.active is True:
-        ax1.scatter(
-            kdp.abs_x_posis, kdp.abs_y_posis, marker="*", s=10, label="Targets"
-        )
+        ax1.scatter(kdp.abs_x_posis, kdp.abs_y_posis, marker="*", s=10, label="Targets")
         ax1.legend()
     ax1.set_ylabel("absolute y[mm]")
     ax1.set_xlabel("absolute x[mm]")
@@ -1270,12 +1219,8 @@ def plot(
     ax1.set_ylim((0, 350))
     ax1.grid()
     if enderstat.abs_x_pos == center_x_y and enderstat.abs_y_pos == center_x_y:
-        ax1.vlines(
-            center_x_y, 0, 500, linestyles="dotted", color="black", alpha=0.5
-        )
-        ax1.hlines(
-            center_x_y, 0, 500, linestyles="dotted", color="black", alpha=0.5
-        )
+        ax1.vlines(center_x_y, 0, 500, linestyles="dotted", color="black", alpha=0.5)
+        ax1.hlines(center_x_y, 0, 500, linestyles="dotted", color="black", alpha=0.5)
 
     ax2.set_title("Front view")
 
@@ -1311,9 +1256,7 @@ def plot(
             )
             ax2.add_collection(pc)
         if enderstat.tank_architecture == "select tank":
-            tank_archtctrs = [
-                Rectangle((0, 0), width=0, height=0)
-            ]  # delete tank
+            tank_archtctrs = [Rectangle((0, 0), width=0, height=0)]  # delete tank
             pc = PatchCollection(
                 tank_archtctrs,
                 facecolor="lightsteelblue",
