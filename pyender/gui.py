@@ -1388,7 +1388,10 @@ app.title("Ender 5 Interface")
 app.configure(background="#1A5175")
 app.grid()
 
-app.iconbitmap("../images/ico/ico_sciopy.ico")
+try:
+    app.iconbitmap("../images/ico/ico_sciopy.ico")
+except BaseException:
+    print("\t tkinter.TclError: bitmap not defined")
 
 connect_ender_5 = ConnectEnder5(app)
 connect_sciospec = ScioSpecPort(app)
