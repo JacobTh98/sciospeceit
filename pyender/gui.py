@@ -91,7 +91,7 @@ from ender5control import (
     compute_abs_x_y_from_r_phi,
     compute_abs_x_y_from_x_y,
     calculate_moving_time,
-    read_temperature,  # TBD
+    read_temperature,
 )
 
 """

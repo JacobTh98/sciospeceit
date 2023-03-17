@@ -15,7 +15,8 @@ from ender_sciospec_classes import Ender5Stat, HitBoxTank
 
 
 def available_serial_ports() -> list:
-    """Lists serial port names
+    """
+    Lists serial port names
 
     :raises EnvironmentError:
         On unsupported or unknown platforms
@@ -45,8 +46,22 @@ def available_serial_ports() -> list:
 
 def connect_COM_port(port: str = "COM4", baudrate: int = 115200, timeout: int = 1):
     """
-    Etablishes a serial connection to a given com port.
+    Establishes a serial connection to a given com port.
     Returnes the serial connection
+
+    Parameters
+    ----------
+    port : str, optional
+        Ender com port, by default "COM4"
+    baudrate : int, optional
+        communication baud rate, by default 115200
+    timeout : int, optional
+        timeout time in seconds, by default 1
+
+    Returns
+    -------
+    _type_
+        _description_
     """
 
     ser = serial.Serial(
@@ -105,29 +120,75 @@ def move_to_absolute_x_y(ser, enderstat: Ender5Stat) -> None:
 
 
 def disable_steppers(ser) -> None:
+    """disable the steppers
+
+    Parameters
+    ----------
+    ser : _type_
+        serial connection
+    """
     command(ser, "M18 X Y Z E\r\n")
 
 
 def enable_steppers(ser) -> None:
+    """Enable steppers
+
+    Parameters
+    ----------
+    ser : _type_
+        serial connection
+    """
     command(ser, "M17 X Y Z E\r\n")
 
 
 def x_y_home(ser, enderstat: Ender5Stat) -> None:
+    """Move to home position
+
+    Parameters
+    ----------
+    ser : _type_
+        serial connection
+    enderstat : Ender5Stat
+        ender 5 status dataclass
+    """
     command(ser, f"G28 X0 Y0 F{enderstat.motion_speed}\r\n")
     command(ser, f"G28 Z0 F{enderstat.motion_speed}\r\n")
     print(enderstat)
 
 
 def x_y_center(ser, enderstat: Ender5Stat) -> None:
+    """Move to x,y center position
+
+    Parameters
+    ----------
+    ser : _type_
+        serial connection
+    enderstat : Ender5Stat
+        ender 5 status dataclass
+    """
     command(ser, f"G0 X180 Y180 F{enderstat.motion_speed}\r\n")
     print(enderstat)
 
 
 def turn_off_fan(ser) -> None:
+    """Turn off the cooling fans.
+
+    Parameters
+    ----------
+    ser : _type_
+        serial connection
+    """
     command(ser, "M106 S0\r\n")
 
 
 def init_axis(ser) -> None:
+    """Initialise the axis
+
+    Parameters
+    ----------
+    ser : _type_
+        serial connection
+    """
     x_y_home(ser)
     x_y_center(ser)
     turn_off_fan(ser)
@@ -135,15 +196,32 @@ def init_axis(ser) -> None:
 
 
 def circle_clockwise(
-    ser, X, Y, enderstat: Ender5Stat, I=180, J=180, clock: bool = True
+    ser,
+    X: float,
+    Y: float,
+    enderstat: Ender5Stat,
+    I: float = 180.0,
+    J: float = 180.0,
+    clock: bool = True,
 ) -> None:
-    """
-    clock : True = clockwise, False = counter-clockwise
-    X : The position to move to on the X axis
-    Y : The position to move to on the Y axis
-    I : The point in X space from the current X position to maintain a constant distance from
-    J : The point in Y space from the current Y position to maintain a constant distance from
-    enderstat.motion_speed : The feedrate per minute of the move between the starting point and ending point (if supplied)
+    """Move a circular trajectory.
+
+    Parameters
+    ----------
+    ser : _type_
+        serial connection
+    X : float
+        The position to move to on the X axis
+    Y : float
+        The position to move to on the Y axis
+    enderstat : Ender5Stat
+        _description_
+    I : float
+        The point in X space from the current X position to maintain a constant distance from, by default 180
+    J : float
+         The point in Y space from the current Y position to maintain a constant distance from, by default 180
+    clock : bool, optional
+        direction, by default True equals clockwise direction
     """
     if clock:
         command(ser, f"G2 X{X} Y{Y} I{I} J{J} F{enderstat.motion_speed}\r\n")
@@ -152,6 +230,15 @@ def circle_clockwise(
 
 
 def command(ser, command) -> None:
+    """Write a command to the serial connection.
+
+    Parameters
+    ----------
+    ser : _type_
+        serial connection
+    command : _type_
+        command string
+    """
     ser.write(str.encode(command))
     time.sleep(1)
     while True:
@@ -165,16 +252,21 @@ def command(ser, command) -> None:
 # Math commands
 
 
-def compute_abs_x_y_from_r_phi(r, phi_step) -> np.ndarray:
-    """
-    Returns a P(x,y) array with the relating trajectory positions.
+def compute_abs_x_y_from_r_phi(r: float, phi_step: int) -> np.ndarray:
+    """Returns a P(x,y) array with the relating trajectory positions.
     Fixpoint/start is the Ender 5 center at P(180,180)
 
-    r : absolute radial movement trajectory [mm]
-    phi_step : angle step [°]
+    Parameters
+    ----------
+    r : float
+        absolute radial movement trajectory [mm]
+    phi_step : int
+        angle step [°]
 
-    returns:
-        x,y : Arrays with corresponding x,y steps
+    Returns
+    -------
+    np.ndarray
+        Arrays with corresponding x,y steps
     """
     x0, y0 = 180, 180
     angles = np.radians(np.arange(0, 360, phi_step))
@@ -185,21 +277,37 @@ def compute_abs_x_y_from_r_phi(r, phi_step) -> np.ndarray:
 
 
 def compute_abs_x_y_from_x_y(
-    x_start, y_start, x_stop, y_stop, x_steps, y_steps, hbt: HitBoxTank
+    x_start: float,
+    y_start: float,
+    x_stop: float,
+    y_stop: float,
+    x_steps: float,
+    y_steps: float,
+    hbt: HitBoxTank,
 ) -> np.ndarray:
-    """
-    Returns a mesh of evenly distributed measurement points
-    x_start : Start of the grid at x
-    y_start : Start of the grid at y
-    x_stop : Stop of the grid at x
-    y_stop : Stop of the grid at x
-    x_steps : Number of steps on the x-axis including endpoint
-    y_steps : Number of steps on the y-axis including endpoint
-    hbt : Hitbox of the placed tank
+    """Returns a mesh of evenly distributed measurement points
 
-    returns:
-        x,y : Arrays with corresponding x,y steps
+    Parameters
+    ----------
+    x_start : float
+        start of the grid at x
+    y_start : float
+        start of the grid at y
+    x_stop : float
+        stop of the grid at x
+    y_stop : float
+        stop of the grid at y
+    x_steps : float
+        number of steps on the x-axis including endpoint
+    y_steps : float
+        number of steps on the x-axis including endpoint
+    hbt : HitBoxTank
+        hitbox of the placed tank
 
+    Returns
+    -------
+    np.ndarray
+        arrays with corresponding x,y steps
     """
     x_sigle_vals = np.linspace(x_start, x_stop, num=x_steps, endpoint=True)
     y_sigle_vals = np.linspace(y_start, y_stop, num=y_steps, endpoint=True)
@@ -226,8 +334,19 @@ def compute_abs_x_y_from_x_y(
 
 
 def calculate_moving_time(enderstat: Ender5Stat, tol: int = 1) -> Union[int, float]:
-    """
-    Computes the time that the Ender5 needs for moving from one point to another in seconds including a time tolerance of 1s.
+    """Computes the time that the Ender5 needs for moving from one point to another in seconds including a time tolerance of 1s.
+
+    Parameters
+    ----------
+    enderstat : Ender5Stat
+        ender status dataclass
+    tol : int, optional
+        tolerance time, by default 1
+
+    Returns
+    -------
+    Union[int, float]
+        moving time
     """
     dx = enderstat.abs_x_tgt - enderstat.abs_x_pos
     dy = enderstat.abs_y_tgt - enderstat.abs_y_pos
