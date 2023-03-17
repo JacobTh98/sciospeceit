@@ -245,7 +245,6 @@ class ConnectEnder5:
     """
 
     def __init__(self, app) -> None:
-
         self.com_dropdown_ender = ttk.Combobox(values=detected_com_ports)
         self.com_dropdown_ender.bind("<<ComboboxSelected>>", self.dropdown_callback)
         self.com_dropdown_ender.place(
@@ -260,7 +259,10 @@ class ConnectEnder5:
             command=self.connect_interact,
         )
         self.connect_interact_button.place(
-            x=3 * spacer + btn_width, y=spacer, width=x_0ff - spacer, height=btn_height
+            x=3 * spacer + btn_width,
+            y=spacer,
+            width=x_0ff - spacer,
+            height=btn_height,
         )
 
     def dropdown_callback(self, event=None):
@@ -274,7 +276,11 @@ class ConnectEnder5:
         global enderstat, COM_Ender
 
         self.connect_interact_button["text"] = "Connecting ..."
-        print("Connection to ", str(self.com_dropdown_ender.get()), "established.")
+        print(
+            "Connection to ",
+            str(self.com_dropdown_ender.get()),
+            "established.",
+        )
         try:
             COM_Ender = serial.Serial(self.com_dropdown_ender.get(), 115200)
             time.sleep(1)
@@ -325,7 +331,8 @@ class ScioSpecPort:
         if event:
             scio_spec_measurement_config.com_port = self.com_dropdown_sciospec.get()
             print(
-                "dropdown opened and selected:", scio_spec_measurement_config.com_port
+                "dropdown opened and selected:",
+                scio_spec_measurement_config.com_port,
             )
         else:
             pass
@@ -361,7 +368,7 @@ class ScioSpecConfig:
 
             scio_spec_measurement_config.material = material_dropdown.get()
             scio_spec_measurement_config.saline_conductivity = float(
-                entry_sline_cond.get()
+                entry_sline_cond.get(), str(saline_unit.get())
             )
             scio_spec_measurement_config.water_lvl = float(entry_water_lvl.get())
             scio_spec_measurement_config.exc_freq = float(etry_exc_freq.get())
@@ -373,7 +380,13 @@ class ScioSpecConfig:
             print(scio_spec_measurement_config)
             self.sciospec_cnf_wndow.destroy()
 
-        labels = ["Burst count:", "Save path:", "Object:", "size:", "Electrodes:"]
+        labels = [
+            "Burst count:",
+            "Save path:",
+            "Object:",
+            "size:",
+            "Electrodes:",
+        ]
 
         for i in range(len(labels)):
             label = Label(self.sciospec_cnf_wndow, text=labels[i], anchor="w")
@@ -387,7 +400,10 @@ class ScioSpecConfig:
             self.sciospec_cnf_wndow, text="Saline conductivity:", anchor="w"
         )
         label_saline.place(
-            x=7 * btn_width + spacer, y=0, width=3 * btn_width, height=btn_height
+            x=7 * btn_width + spacer,
+            y=0,
+            width=3 * btn_width,
+            height=btn_height,
         )
 
         entry_sline_cond = Entry(self.sciospec_cnf_wndow)
@@ -534,12 +550,14 @@ class StepWidthSelect:
 
 class MovementXYZ:
     def __init__(self, app) -> None:
-
         self.x_set_btn = Button(app, text="Set x=", command=self.set_x)
         self.x_set_btn.place(x=spacer, y=y_0ff, width=btn_width, height=btn_height)
         self.x_set_entry = Entry(app)
         self.x_set_entry.place(
-            x=2 * spacer + btn_width, y=y_0ff, width=btn_width, height=btn_height
+            x=2 * spacer + btn_width,
+            y=y_0ff,
+            width=btn_width,
+            height=btn_height,
         )
         self.x_set_unit = Label(app, text="mm").place(
             x=2 * spacer + 2 * btn_width,
@@ -550,7 +568,10 @@ class MovementXYZ:
 
         self.y_set_btn = Button(app, text="Set y=", command=self.set_y)
         self.y_set_btn.place(
-            x=spacer, y=y_0ff + btn_height + spacer, width=btn_width, height=btn_height
+            x=spacer,
+            y=y_0ff + btn_height + spacer,
+            width=btn_width,
+            height=btn_height,
         )
         self.y_set_entry = Entry(app)
         self.y_set_entry.place(
@@ -589,7 +610,10 @@ class MovementXYZ:
 
         self.y_up_btn = Button(app, text="y+", command=self.move_y_up)
         self.y_up_btn.place(
-            x=x_0ff + btn_width + spacer, y=y_0ff, width=btn_width, height=btn_height
+            x=x_0ff + btn_width + spacer,
+            y=y_0ff,
+            width=btn_width,
+            height=btn_height,
         )
 
         self.y_down_btn = Button(app, text="y-", command=self.move_y_down)
@@ -610,7 +634,10 @@ class MovementXYZ:
 
         self.x_up_btn = Button(app, text="x-", command=self.move_x_down)
         self.x_up_btn.place(
-            x=x_0ff, y=y_0ff + spacer + btn_height, width=btn_width, height=btn_height
+            x=x_0ff,
+            y=y_0ff + spacer + btn_height,
+            width=btn_width,
+            height=btn_height,
         )
 
         self.x_down_btn = Button(app, text="x+", command=self.move_x_up)
@@ -863,7 +890,10 @@ class CreateCircularTrajectory:
 class NextAutoDriveResetMeasure:
     def __init__(self, app) -> None:
         self.next_step_btn = Button(
-            app, text="Next step", command=self.next_trajectory_step, state="disabled"
+            app,
+            text="Next step",
+            command=self.next_trajectory_step,
+            state="disabled",
         )
         self.next_step_btn.place(
             x=spacer,
@@ -873,7 +903,10 @@ class NextAutoDriveResetMeasure:
         )
 
         self.auto_step_btn = Button(
-            app, text="Auto drive", command=self.auto_trajectory_drive, state="disabled"
+            app,
+            text="Auto drive",
+            command=self.auto_trajectory_drive,
+            state="disabled",
         )
         self.auto_step_btn.place(
             x=2 * spacer + 2 * btn_width,
@@ -1146,19 +1179,29 @@ def plot(
     if enderstat.tank_architecture is not None:
         if enderstat.tank_architecture == "select tank":
             circle = Circle(
-                (center_x_y, center_x_y), radius=1, color="lightsteelblue", alpha=0
+                (center_x_y, center_x_y),
+                radius=1,
+                color="lightsteelblue",
+                alpha=0,
             )
             ax1.add_artist(circle)
         else:
             circle = Circle(
-                (center_x_y, center_x_y), radius=100, color="lightsteelblue", alpha=0.7
+                (center_x_y, center_x_y),
+                radius=100,
+                color="lightsteelblue",
+                alpha=0.7,
             )
             ax1.add_artist(circle)
 
     ax1.scatter(enderstat.abs_x_pos, enderstat.abs_y_pos, marker=".", label="Currently")
     if enderstat.abs_x_tgt is not None or enderstat.abs_y_tgt is not None:
         ax1.scatter(
-            enderstat.abs_x_tgt, enderstat.abs_y_tgt, marker="*", s=10, label="Targets"
+            enderstat.abs_x_tgt,
+            enderstat.abs_y_tgt,
+            marker="*",
+            s=10,
+            label="Targets",
         )
         ax1.legend()
     if cdp.active is True:
@@ -1188,7 +1231,10 @@ def plot(
                 )
             ]
             pc = PatchCollection(
-                tank_archtctrs, facecolor="lightsteelblue", alpha=0.7, edgecolor="black"
+                tank_archtctrs,
+                facecolor="lightsteelblue",
+                alpha=0.7,
+                edgecolor="black",
             )
             ax2.add_collection(pc)
         if enderstat.tank_architecture == "high":
@@ -1200,13 +1246,19 @@ def plot(
                 )
             ]
             pc = PatchCollection(
-                tank_archtctrs, facecolor="lightsteelblue", alpha=0.7, edgecolor="black"
+                tank_archtctrs,
+                facecolor="lightsteelblue",
+                alpha=0.7,
+                edgecolor="black",
             )
             ax2.add_collection(pc)
         if enderstat.tank_architecture == "select tank":
             tank_archtctrs = [Rectangle((0, 0), width=0, height=0)]  # delete tank
             pc = PatchCollection(
-                tank_archtctrs, facecolor="lightsteelblue", alpha=0.7, edgecolor="black"
+                tank_archtctrs,
+                facecolor="lightsteelblue",
+                alpha=0.7,
+                edgecolor="black",
             )
             ax2.add_collection(pc)
 
