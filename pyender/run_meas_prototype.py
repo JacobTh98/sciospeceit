@@ -12,6 +12,7 @@ from sciopy import (
     SystemMessageCallback,
     SetBurstCount,
     conf_n_el_16_adjacent,
+    conf_n_el_16_opposite,
     connect_COM_port,
     StartStopMeasurement,
     reshape_full_message_in_bursts,
@@ -163,7 +164,7 @@ if accessed:
     #    SystemMessageCallback(COM_ScioSpec)
 
     # Send configuration an read answer
-    scio_spec_measurement_config = conf_n_el_16_adjacent(
+    scio_spec_measurement_config = conf_n_el_16_opposite(
         COM_ScioSpec, scio_spec_measurement_config
     )
     print("\tConfig 4", scio_spec_measurement_config)
@@ -206,7 +207,7 @@ if accessed:
             COM_ScioSpec = connect_COM_port(COM_ScioSpec.name)
             time.sleep(2)
             SystemMessageCallback(COM_ScioSpec)
-            scio_spec_measurement_config = conf_n_el_16_adjacent(
+            scio_spec_measurement_config = conf_n_el_16_opposite(
                 COM_ScioSpec, scio_spec_measurement_config
             )
             time.sleep(1)
