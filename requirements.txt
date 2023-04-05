@@ -1,7 +1,6 @@
 matplotlib==3.3.3
 numpy==1.22.3
 pyserial==3.5
-sciopy==0.3.3
-sciopy.egg==info
+sciopy==0.6.2
 screeninfo==0.8.1
 tqdm==4.60.0
