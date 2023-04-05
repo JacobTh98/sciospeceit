@@ -10,7 +10,6 @@ def split_pickle_to_classes(
 ) -> Union[
     ScioSpecMeasurementConfig, CircleDrivePattern, KartesianDrivePattern, Ender5Stat
 ]:
-
     return pkl_data[0], pkl_data[1], pkl_data[2], pkl_data[3]
 
 

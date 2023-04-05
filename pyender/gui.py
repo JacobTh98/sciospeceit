@@ -158,7 +158,7 @@ class Log:
 
 detected_com_ports = available_serial_ports()  # ["COM3", "COM4"]
 tank_architectures = ["select tank", "medium", "high"]
-object_architectures = ["none","circle", "triangle", "square"]
+object_architectures = ["none", "circle", "triangle", "square"]
 object_sizes = [0.1, 0.2, 0.3, 0.4]
 n_el_possibilities = [16, 32, 48, 64]
 step_width = [0.1, 1, 10]
@@ -239,7 +239,6 @@ class ConnectEnder5:
     """
 
     def __init__(self, app) -> None:
-
         self.com_dropdown_ender = ttk.Combobox(values=detected_com_ports)
         self.com_dropdown_ender.bind("<<ComboboxSelected>>", self.dropdown_callback)
         self.com_dropdown_ender.place(
@@ -454,7 +453,6 @@ class StepWidthSelect:
 
 class MovementXYZ:
     def __init__(self, app) -> None:
-
         self.x_set_btn = Button(app, text="Set x=", command=self.set_x)
         self.x_set_btn.place(x=spacer, y=y_0ff, width=btn_width, height=btn_height)
         self.x_set_entry = Entry(app)
