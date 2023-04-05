@@ -10,7 +10,12 @@ from sciopy import (
     #    configuration_01,
     #    configuration_02,
     SetBurstCount,
+<<<<<<< HEAD
     configuration_03,
+=======
+    conf_n_el_16_adjacent,
+    conf_n_el_16_opposite,
+>>>>>>> jac_dev
     connect_COM_port,
     StartStopMeasurement,
     reshape_full_message_in_bursts,
@@ -134,7 +139,11 @@ if accessed:
         print("Cant connect to port.")
 
     # Send configuration an read answer
+<<<<<<< HEAD
     scio_spec_measurement_config = configuration_03(
+=======
+    scio_spec_measurement_config = conf_n_el_16_opposite(
+>>>>>>> jac_dev
         COM_ScioSpec, scio_spec_measurement_config
     )
     print("\tConfig 4", scio_spec_measurement_config)
@@ -165,7 +174,41 @@ if accessed:
         measurement_data = split_bursts_in_frames(
             split_measurement_data, scio_spec_measurement_config
         )
+<<<<<<< HEAD
         measurement_data = check_for_content(measurement_data)
+=======
+        print(f"\tlen of {len(measurement_data[0])=}.")
+
+        reset_num = 0
+        while len(measurement_data[0]) == 0:
+            telegram_KI_bot(f"empty measurement->reset {reset_num}", telegram_config)
+            SystemMessageCallback(COM_ScioSpec)
+            time.sleep(5)
+            SoftwareReset(COM_ScioSpec)
+            time.sleep(10)
+            COM_ScioSpec = connect_COM_port(COM_ScioSpec.name)
+            time.sleep(2)
+            SystemMessageCallback(COM_ScioSpec)
+            scio_spec_measurement_config = conf_n_el_16_opposite(
+                COM_ScioSpec, scio_spec_measurement_config
+            )
+            time.sleep(1)
+            SystemMessageCallback(COM_ScioSpec)
+            SetBurstCount(COM_ScioSpec, scio_spec_measurement_config)
+            SystemMessageCallback(COM_ScioSpec)
+            # Measure up to burst count
+            measurement_data_hex = StartStopMeasurement(COM_ScioSpec)
+            # Delete hex in mesured buffer
+            measurement_data = del_hex_in_list(measurement_data_hex)
+            # Reshape the full mesaurement buffer. Depending on number of electrodes
+            split_measurement_data = reshape_full_message_in_bursts(
+                measurement_data, scio_spec_measurement_config
+            )
+            measurement_data = split_bursts_in_frames(
+                split_measurement_data, scio_spec_measurement_config
+            )
+            reset_num += 1
+>>>>>>> jac_dev
 
         for bursts in measurement_data:
             # Check if burst is zero:
