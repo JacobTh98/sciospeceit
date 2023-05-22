@@ -22,7 +22,11 @@ from sciopy import (
     SoftwareReset,
 )
 
-from ender_sciospec_classes import CircleDrivePattern, KartesianDrivePattern, Ender5Stat
+from ender_sciospec_classes import (
+    CircleDrivePattern,
+    KartesianDrivePattern,
+    Ender5Stat,
+)
 from sciopy.sciopy_dataclasses import ScioSpecMeasurementConfig
 
 
@@ -109,7 +113,10 @@ start_time = time.time()
 def split_pickle_to_classes(
     pkl_data: list,
 ) -> Union[
-    ScioSpecMeasurementConfig, CircleDrivePattern, KartesianDrivePattern, Ender5Stat
+    ScioSpecMeasurementConfig,
+    CircleDrivePattern,
+    KartesianDrivePattern,
+    Ender5Stat,
 ]:
     return pkl_data[0], pkl_data[1], pkl_data[2], pkl_data[3]
 
