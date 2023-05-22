@@ -12,14 +12,12 @@
 
 ## Repository
 
-### Clone
-    git clone https://gitlab.elaine.uni-rostock.de/b06/sciospeceit.git
 
 
 ### Branches
 
 - `main` Merge of successful development steps
-- `jac_dev` Developing branch for [jt292](https://gitlab.elaine.uni-rostock.de/jt292)
+- `jac` and `jac_dev` Developing branches
 
 ### Push and Merge from `own_branch` to `main`
 
