@@ -1,4 +1,4 @@
-<img src="https://gitlab.elaine.uni-rostock.de/b06/sciospeceit/-/raw/jac_dev/images/ico/logo_width.png">
+<img src="https://raw.githubusercontent.com/JacobTh98/sciospeceit/jac_dev/images/ico/logo_width.png?token=GHSAT0AAAAAACCHFRCZDGGHWRD4XAOOJRROZDLME7Q">
 
 ## Schedule
 
