@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/JacobTh98/sciospeceit/jac_dev/images/ico/logo_width.png?token=GHSAT0AAAAAACCHFRCZDGGHWRD4XAOOJRROZDLME7Q">
+<img src="https://raw.githubusercontent.com/JacobTh98/sciospeceit/dev/images/ico/logo_width.png?token=GHSAT0AAAAAACCHFRCY4UB53LCSUOBIR4QOZDMNKKA">
 
 ## Schedule
 
