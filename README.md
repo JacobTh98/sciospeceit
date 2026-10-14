@@ -1,5 +1,11 @@
 <img src="https://raw.githubusercontent.com/JacobTh98/sciospeceit/dev/images/ico/logo_width.png">
 
+## Daten, Repository und Zitieren
+
+- **Daten:** [Zenodo-Datensatz](https://zenodo.org/records/8133612)
+- **Zugehöriges Repository:** [3dIT](https://github.com/JacobTh98/3dIT)
+- **Paper zum Zitieren:** [IEEE Xplore](https://ieeexplore.ieee.org/abstract/document/10781524)
+
 ## Schedule
 
 - [x] Set up measurement environment
