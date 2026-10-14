@@ -1,0 +1,197 @@
+<img src="https://raw.githubusercontent.com/JacobTh98/sciospeceit/dev/images/ico/logo_width.png">
+
+## Schedule
+
+- [x] Set up measurement environment
+- [x] Print out the ScioSpec user manual
+- [x] First test measurement
+- [x] Review data
+- [x] Proceed and describe further steps
+- [x] Write a `sciopy` module to convert .eit data and record data using a serial connection
+- [x] Record first experimental data
+
+## Repository
+
+
+
+### Branches
+
+- `main` Merge of successful development steps
+- `jac` and `jac_dev` Developing branches
+
+### Push and Merge from `own_branch` to `main`
+
+
+    git branch backup_branch
+    git checkout backup_branch
+
+    git branch -d own_branch
+    git branch own_branch
+    git checkout own_branch
+
+    git reset main
+    git add .
+    git commit -a -m "all i wanna say"
+    git push origin own_branch
+
+    git branch -d backup_branch
+
+### Make the current Git branch a main branch
+
+    git checkout better_branch
+    git merge --strategy=ours --no-commit main
+    git commit -m "all i wanna say."            # add information to the template merge message
+    git checkout main
+    git merge better_branch                     # fast-forward main up to the merge
+
+## Recommended software
+
+- VSC-Code
+- Pythoon
+- ScioSpecEIT
+- JupyterLab
+- SublimeMerge
+
+# ScioSpec EIT Device
+
+Sciospec specializes in solutions for electrical impedance spectroscopy, impedance tomography and other electrochemical/-analytical techniques. Primary applications are bio-analytics, biosensors, material science and process control.
+
+## Start ScioSpec Software from PowerShell
+
+- Plug in USB-Connection inside ScioSpec `USB-FS` and turn it on
+- Navigate to directory (`<installation-directory>`)
+- Right `shift`+ `right mouse click` and `Open in PowerSehell`
+- Insert: `.\jre\bin\java.exe -jar .\Sciospec_EIT_Software_v1.19.jar 3.1416` or `.\jre\bin\java.exe -jar .\Sciospec_EIT_Software_v1.19.jar`
+- Press `Enter` and the GUI opens
+- Select `Serial` and the right `COM<n>`-port and press `OK` and `CONNECT`
+- Inside the new window select `create setup` and insert your individual setup configuration e.g. Amplitude 1.0, Range[V] +/-5, Min f[Hz]=10k, Max f[Hz] = 10k,  Steps=1, Scale=LINEAR and press next.
+- Select number of electrodes and the pattern.
+- Continue with own measurement configuration
+- ...
+
+## ScioSpec Communication Interface
+
+The Sciospec Communication Interface (COMinterface) enables the user to access all functions of the device by 
+using any of the available master interfaces. The actual command structure is identical in all connection types.
+
+### Syntax
+The general structure of each communication with a Sciospec device:
+The communication is done by frames
+Each communication frame is constructed as follows
+- 1 byte command-Tag (Frame-Start)
+- 1 byte number of data-bytes (0...255) 0...255 data-bytes
+- 1 byte Command-Tag (Frame-End)
+- The command-tag identifies the command (see Command list)
+- Frame-Start and –End must be identical
+
+# Setup ScioSpec Measurement 
+
+## Connection opportunities
+
+**USB**
+- Named "USB-HS" (USB High Speed) on the backplate of the ScioSpecEIT device
+- Not galvanically isolated
+
+**Ethernet**
+- Not galvanically isolated
+- Use for long distances
+- High communication data rate, use local network (switch)
+
+**Serial**
+- Named "USB-FS" (USB Full Speed) on the backplate of the ScioSpecEIT device
+- Data rates up to 1MB/s
+- Galvanically isolated
+
+## Framerate
+It can be set near zero up to 100.
+
+## Burst Count
+Set the number of measurements that has to be done. If `0` the system measures until you press the measurement button again.
+
+## Frequency
+The defineable variables are `f_min`, `f_max`, `count` and `scale`.
+- `f_min` is the start frequency
+- `f_max` is the stop frequency 
+- If `f_min` < `f_max` the `count` defines the equdistant steps between the min and max values
+- `scale` can be selected as LINEAR or LOGARITHMIC. It has a direct impact to the `count` values 
+
+## Switch
+
+**ReedRelay**
+
+Are much slower in switching ~600µs, but the parasitic capacitance and parasitic resistance are very low.
+
+**Semiconductor**
+
+The switch is used in fast measurements, because of its switching time of less than some ns. The disadvantage is high parasitic capacitance and parasitic resistance. 
+
+## Measurement Mode
+
+In any mode except "SingleEnded" the complex potentials are measured and saved to the .eit frame.
+For E.g. the opposite drive pattern the mode has to be implemented on our own. For computing, the voltage data from complex potentials see the next chapter.
+
+## Termination
+
+The operator **Intern**  includes only measurement data of the defined electrode range. **Extern** records the external potential data too.
+
+## Compute Voltage from Complex Potentials
+Pay attention. The following order must be observed:
+- Subtract the real and imaginary parts of the corresponding electrodes
+- Compute the absolute value 
+
+
+# Measurement PC
+
+For starting, stopping, spectating, and evaluating the measurements.
+
+Installed software:
+
+- [x] Visual-Studio-Code
+- [x] ScioSpecEIT
+- [x] Sublime Merge
+- [x] JupyterLab
+- [x] Python3.11
+
+## Measurement Components
+
+- [x] Saline
+- [x] Different object geometries
+
+# Ender 5 - Gcode
+
+- https://all3dp.com/2/3d-printer-g-code-commands-list-tutorial/
+- https://www.cncprofi.eu/images/pdf/Befehle%20G-code%20D5.pdf
+- https://gcode.ws/
+
+# Speed performance regarding the burst count settings
+
+Inside the picture below you can see that it is more useful to set the burst count inside the ScioSpec device instead of a for loop. For very large measurements you can save a lot of time and energy due to higher performance using the burst count function.
+
+![Performance estimation](images/perf_est_ScioSpec_burst_for_/pic_01.png)
+
+# Contributors
+
+- jt292
+- lk443
+- ss1272
+
+# Acknowledgment
+
+Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Founda-
+tion) – SFB 1270/2 - 299150580.
+
+# License
+
+ *TBD*
+
+# Project status
+In Progress
+
+## Local configuration
+
+Copy `telegram_config.example.json` to `telegram_config.json` in the working
+directory to enable Telegram notifications. Keep bot tokens and chat IDs in the
+local file only; it is excluded from Git. Notifications are disabled by default.
+
+Local measurement configurations (`*.pkl`) and temporary measurement data
+(`pyender/tmp_data/`) are also excluded from Git. Generate them locally as needed.
